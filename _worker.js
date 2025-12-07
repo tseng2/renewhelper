@@ -387,25 +387,60 @@ const DataStore = {
     await env.RENEW_KV.put(this.KEYS.SETTINGS, JSON.stringify(data, null, 2));
   },
 
-  async getItems(env) {
-    const raw = await env.RENEW_KV.get(this.KEYS.ITEMS);
+  // 【修复】移除 cacheTtl 参数，修复 400 错误
+  async getItemsPackage(env) {
+    // 移除 cacheTtl: 0，默认读取
+    const raw = await env.RENEW_KV.get(this.KEYS.ITEMS, { type: "text" });
     try {
-      return raw ? JSON.parse(raw) : [];
+      if (!raw) return { items: [], version: 0 };
+      const parsed = JSON.parse(raw);
+
+      // 兼容旧数据（纯数组格式）
+      if (Array.isArray(parsed)) {
+        return { items: parsed, version: 0 };
+      }
+      // 新数据格式
+      return { items: parsed.items || [], version: parsed.version || 0 };
     } catch (e) {
-      return [];
+      return { items: [], version: 0 };
     }
   },
 
-  async saveItems(env, data) {
-    await env.RENEW_KV.put(this.KEYS.ITEMS, JSON.stringify(data));
+  // 【修复】移除 cacheTtl 参数
+  async getItems(env) {
+    const pkg = await this.getItemsPackage(env);
+    return pkg.items;
+  },
+
+  // 带乐观锁的保存
+  async saveItems(env, newItems, expectedVersion = null, force = false) {
+    // 1. 如果不是强制保存，先检查版本
+    if (!force) {
+      const currentPkg = await this.getItemsPackage(env);
+      // 版本不匹配则抛出冲突
+      if (expectedVersion !== null && currentPkg.version !== expectedVersion) {
+        throw new Error("VERSION_CONFLICT");
+      }
+    }
+
+    // 2. 生成新版本号 (时间戳)
+    const newVersion = Date.now();
+    const storageObj = {
+      items: newItems,
+      version: newVersion,
+    };
+
+    // 3. 写入 KV
+    await env.RENEW_KV.put(this.KEYS.ITEMS, JSON.stringify(storageObj));
+    return newVersion;
   },
 
   async getCombined(env) {
-    const [settings, items] = await Promise.all([
+    const [settings, pkg] = await Promise.all([
       this.getSettings(env),
-      this.getItems(env),
+      this.getItemsPackage(env),
     ]);
-    return { settings, items };
+    return { settings, items: pkg.items, version: pkg.version };
   },
 
   async getLogs(env) {
@@ -753,17 +788,22 @@ function t(k, l, ...a) {
 }
 
 async function checkAndRenew(env, isSched, lang = "zh") {
-  const [conf, items] = await Promise.all([
+  // 【修改】使用 getItemsPackage 获取带版本的数据
+  const [conf, pkg] = await Promise.all([
     DataStore.getSettings(env),
-    DataStore.getItems(env),
+    DataStore.getItemsPackage(env),
   ]);
+
   const s = conf;
+  const items = pkg.items; // 获取 items 数组
+  const currentVersion = pkg.version; // 获取读取时的版本号
+
   const logs = [],
     log = (m) => {
       logs.push(m);
       console.log(m);
     };
-  // 【修改 1】新增 monitor 数组，用于记录"在提醒期内但未到推送时间"的项目
+
   let trig = [],
     upd = [],
     dis = [],
@@ -949,7 +989,27 @@ async function checkAndRenew(env, isSched, lang = "zh") {
     }
   }
 
-  if (changed) await DataStore.saveItems(env, items);
+  // 【修改】保存逻辑
+  if (changed) {
+    try {
+      // 尝试保存，带上读取时的版本号
+      await DataStore.saveItems(env, items, currentVersion);
+      log(`[SYSTEM] Data saved successfully.`);
+    } catch (e) {
+      if (e.message === "VERSION_CONFLICT") {
+        // 如果冲突，Cron 任务选择放弃，不覆盖数据，等待下次运行
+        log(
+          `[WARN] Data conflict detected during cron. Skipping save to protect data.`
+        );
+        // 重要：如果保存失败，不应该发送“已续期”的通知，因为实际上没存进去
+        // 清空 upd 和 dis 数组，避免后续发通知误导
+        upd = [];
+        dis = [];
+      } else {
+        log(`[ERR] Save failed: ${e.message}`);
+      }
+    }
+  }
 
   if (s.enableNotify) {
     let pushBody = [];
@@ -1011,7 +1071,8 @@ async function checkAndRenew(env, isSched, lang = "zh") {
     });
   }
 
-  return { logs, currentList: items };
+  // 返回时也带上 version
+  return { logs, currentList: items, version: currentVersion };
 }
 // ==========================================
 // 5. Worker Entry & Router
@@ -1061,10 +1122,18 @@ app.post(
     const body = await req.json().catch(() => ({}));
     const res = await checkAndRenew(env, false, body.lang);
     const settings = await DataStore.getSettings(env);
+    // 重新计算状态
+    const displayList = res.currentList.map((i) =>
+      calculateStatus(i, settings.timezone)
+    );
+
+    // 【修改】如果 checkAndRenew 内部保存成功，版本号应该变了，但我们这里为了简单，
+    // 可以让前端在 check 后自动刷新一次列表，或者这里返回新的 version（如果能获取到）。
+    // 最稳妥的方式是让前端 check 完后重新 fetchList。
     return response({
       code: 200,
       logs: res.logs,
-      data: res.currentList.map((i) => calculateStatus(i, settings.timezone)),
+      data: displayList,
     });
   })
 );
@@ -1086,6 +1155,8 @@ app.post(
   "/api/save",
   withAuth(async (req, env) => {
     const body = await req.json();
+
+    // 处理 items 数据清洗
     const items = body.items.map((i) => ({
       ...i,
       id: i.id || Date.now().toString(),
@@ -1094,20 +1165,35 @@ app.post(
       tags: Array.isArray(i.tags) ? i.tags : [],
       useLunar: !!i.useLunar,
       notifyDays: i.notifyDays !== null ? Number(i.notifyDays) : null,
-      notifyTime: i.notifyTime || "08:00", // Save notifyTime
+      notifyTime: i.notifyTime || "08:00",
       autoRenew: i.autoRenew !== false,
       autoRenewDays: i.autoRenewDays !== null ? Number(i.autoRenewDays) : null,
     }));
+
     const currentSettings = await DataStore.getSettings(env);
     const newSettings = {
       ...body.settings,
       jwtSecret: currentSettings.jwtSecret,
     };
-    await Promise.all([
-      DataStore.saveItems(env, items),
-      DataStore.saveSettings(env, newSettings),
-    ]);
-    return response({ code: 200, msg: "SAVED" });
+
+    try {
+      // 【修改】获取前端传来的 version，进行乐观锁保存
+      // 如果前端没传 version (旧版前端)，视作 null，可能会导致覆盖，但在升级过渡期允许
+      // 或者强制要求 version，这里假设前端会传
+      const clientVersion =
+        body.version !== undefined ? Number(body.version) : null;
+
+      const newVersion = await DataStore.saveItems(env, items, clientVersion);
+      await DataStore.saveSettings(env, newSettings);
+
+      // 返回新版本号给前端
+      return response({ code: 200, msg: "SAVED", version: newVersion });
+    } catch (e) {
+      if (e.message === "VERSION_CONFLICT") {
+        return error("DATA_CHANGED_RELOAD_REQUIRED", 409); // 返回 409 状态码
+      }
+      throw e;
+    }
   })
 );
 
@@ -1977,6 +2063,7 @@ const HTML = `<!DOCTYPE html>
         createApp({
             setup() {
                 const isLoggedIn = ref(!!localStorage.getItem('jwt_token')), password = ref(''), loading = ref(false), list = ref([]), settings = ref({});
+                const dataVersion = ref(0); // 新增版本号状态
                 const dialogVisible = ref(false), settingsVisible = ref(false), historyVisible = ref(false), historyLoading = ref(false), historyLogs = ref([]);
                 const checking = ref(false), logs = ref([]), displayLogs = ref([]), isEdit = ref(false), lang = ref('zh'), currentTag = ref(''), searchKeyword = ref('');
                 const locale = ref(ZhCn), tableKey = ref(0), termRef = ref(null);
@@ -2037,6 +2124,14 @@ const HTML = `<!DOCTYPE html>
 
                     const l = localStorage.getItem('lang'); if(l) setLang(l);
                     const tk = localStorage.getItem('jwt_token'); if(tk) fetchList(tk);
+
+                  // A. 页面可见性监听：当用户切换回此标签页时，自动刷新
+                  document.addEventListener("visibilitychange", () => {
+                      if (document.visibilityState === 'visible' && isLoggedIn.value) {
+                          fetchList(); // 不传 token 会自动从 localStorage 取
+                      }
+                  });
+                    
                 });
 
                 const setLang = (l) => { lang.value=l; localStorage.setItem('lang',l); locale.value=(l==='zh'?ZhCn:null); };
@@ -2052,20 +2147,72 @@ const HTML = `<!DOCTYPE html>
                 const logout = () => { localStorage.removeItem('jwt_token'); isLoggedIn.value=false; password.value=''; };
                 const getAuth = () => ({ 'Authorization': 'Bearer '+localStorage.getItem('jwt_token') });
                 const fetchList = async (tk) => {
-                    loading.value=true; try {
-                        const r=await fetch('/api/list',{headers:tk?{'Authorization':'Bearer '+tk}:getAuth()});
-                        if(r.status===401) throw new Error(t('msg.loginFail'));
-                        const d=await r.json(); list.value=d.data.items; settings.value=d.data.settings;
-                        if(settings.value.language) setLang(settings.value.language); isLoggedIn.value=true;
-                    } catch(e) { ElMessage.error(e.message); if(e.message===t('msg.loginFail')) logout(); } finally { loading.value=false; }
+                    loading.value = true;
+                    try {
+                        const r = await fetch('/api/list', { headers: tk ? { 'Authorization': 'Bearer ' + tk } : getAuth() });
+                        
+                        // 1. 处理 401 认证失败
+                        if (r.status === 401) throw new Error(t('msg.loginFail'));
+                        
+                        const d = await r.json();
+
+                        // 2. 【核心修复】检查 d.data 是否存在
+                        // 如果后端报错(500/429等)，d.data 是 undefined，直接读取 items 会报错
+                        if (!d.data) {
+                            throw new Error(d.msg || 'Server Error / Load Failed');
+                        }
+
+                        list.value = d.data.items;
+                        settings.value = d.data.settings;
+                        dataVersion.value = d.data.version || 0;
+
+                        if (settings.value.language) setLang(settings.value.language);
+                        isLoggedIn.value = true;
+                    } catch (e) {
+                        ElMessage.error(e.message);
+                        if (e.message === t('msg.loginFail')) logout();
+                    } finally {
+                        loading.value = false;
+                    }
                 };
 
                 const saveData = async (items, set, msg=true) => {
                     loading.value=true; try {
-                        const payload={ items:items||list.value, settings:set||settings.value }; payload.settings.language=lang.value;
-                        await fetch('/api/save',{method:'POST',headers:{...getAuth(),'Content-Type':'application/json'},body:JSON.stringify(payload)});
-                        if(msg) ElMessage.success(t('msg.saved')); await fetchList();
-                    } catch { ElMessage.error(t('msg.saveFail')); } finally { loading.value=false; }
+                        // 【新增】Payload 中加入 version
+                        const payload={ 
+                            items:items||list.value, 
+                            settings:set||settings.value,
+                            version: dataVersion.value 
+                        }; 
+                        payload.settings.language=lang.value;
+
+                        const res = await fetch('/api/save',{method:'POST',headers:{...getAuth(),'Content-Type':'application/json'},body:JSON.stringify(payload)});
+
+                        // 【新增】处理冲突 (409)
+                        if (res.status === 409) {
+                            // 弹出对话框，强制用户刷新
+                            await ElMessageBox.alert(
+                                lang.value === 'zh' ? '数据版本冲突！后台系统（或自动续期）已修改了数据。请刷新页面后重试。' : 'Data Conflict! Data has been modified by system or another session. Please refresh.',
+                                'Sync Error',
+                                { confirmButtonText: 'OK', type: 'error' }
+                            );
+                            await fetchList(); // 自动刷新
+                            return; // 中止后续流程
+                        }
+
+                        if (!res.ok) throw new Error('Save Failed');
+
+                        const d = await res.json();
+                        // 【新增】保存成功后更新本地版本号，避免连续保存报错
+                        if (d.version) dataVersion.value = d.version;
+
+                        if(msg) ElMessage.success(t('msg.saved')); 
+                        // 成功后通常不需要重新 fetchList，因为本地已经是新的，除非为了通过 fetchList 更新计算属性
+                        await fetchList(); 
+
+                    } catch(e) { 
+                        if (e !== 'cancel') ElMessage.error(t('msg.saveFail')); 
+                    } finally { loading.value=false; }
                 };
 
                 const saveItem = async () => {
@@ -2097,6 +2244,8 @@ const HTML = `<!DOCTYPE html>
                     try {
                         const r = await fetch('/api/check', { method: 'POST', headers: getAuth(), body: JSON.stringify({ lang: lang.value }) });
                         const d = await r.json(); 
+                        
+                        // 1. 循环显示日志动画
                         for (const line of d.logs) {
                             displayLogs.value.push(line);
                             await new Promise(res => setTimeout(res, 30)); 
@@ -2105,8 +2254,18 @@ const HTML = `<!DOCTYPE html>
                         await new Promise(res => setTimeout(res, 200)); 
                         displayLogs.value.push(\`[SYSTEM] \${t('msg.execFinish')}\`);
                         if (termRef.value) termRef.value.scrollTop = termRef.value.scrollHeight;
-                        if (d.data) { list.value = d.data; tableKey.value++; }
-                    } catch(e) { displayLogs.value.push("ERR: " + e.message); } finally { checking.value = false; } 
+
+                        // ================== 【这里是修改点】 ==================
+                        // 原来的代码是：if (d.data) { list.value = d.data; tableKey.value++; }
+                        // 现在的代码（请使用下面这一行）：
+                        await fetchList(); 
+                        // ====================================================
+
+                    } catch(e) { 
+                        displayLogs.value.push("ERR: " + e.message); 
+                    } finally { 
+                        checking.value = false; 
+                    } 
                 };
                 const formatLogTime = (isoStr) => {
                     if (!isoStr) return '';
