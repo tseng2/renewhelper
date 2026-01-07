@@ -25,9 +25,12 @@
  * added: add avg monthly label v2.0.10
  * added: add monthly breakdown v2.0.11
  * modified: fix spending stats logic v2.0.12
+ * added: add upcoming bills total v2.0.13
+ * added: add upcoming bills days config v2.0.14
+ * added: add icon and custom push title config v2.0.15
  */
 
-const APP_VERSION = "v2.0.12";
+const APP_VERSION = "v2.0.15";
 //接入免费汇率API
 const EXCHANGE_RATE_API_URL = 'https://api.frankfurter.dev/v1/latest?base=';
 // ==========================================
@@ -1145,7 +1148,7 @@ async function checkAndRenew(env, isSched, lang = "zh") {
 
     if (pushBody.length > 0) {
       const fullBody = pushBody.join("\n").trim();
-      const pushRes = await Notifier.send(s, t("pushTitle", lang), fullBody);
+      const pushRes = await Notifier.send(s, s.notifyTitle || t("pushTitle", lang), fullBody);
       log(`[PUSH] ${pushRes}`);
     }
   }
@@ -1946,7 +1949,7 @@ const HTML = `<!DOCTYPE html>
                                  <el-button class="!p-2 !rounded-none !ml-0" size="small" type="success" plain :icon="RefreshRight" @click="openRenew(scope.row)"></el-button>
                              </el-tooltip>
                              <el-tooltip :content="t('history')" placement="top" :hide-after="0">
-                                 <el-button class="!p-2 !rounded-none !ml-0" size="small" type="warning" plain :icon="Timer" @click="openHistory(scope.row)"></el-button>
+                                 <el-button class="!p-2 !rounded-none !ml-0" size="small" type="warning" plain :icon="Tickets" @click="openHistory(scope.row)"></el-button>
                              </el-tooltip>
 
                         <el-tooltip :content="t('tipEdit')" placement="top" :hide-after="0">
@@ -1976,7 +1979,7 @@ const HTML = `<!DOCTYPE html>
                             <template #dropdown>
                               <el-dropdown-menu>
                                 <el-dropdown-item :icon="RefreshRight" @click="openRenew(scope.row)">{{ t('tipRenew') }}</el-dropdown-item>
-                                <el-dropdown-item :icon="Timer" @click="openHistory(scope.row)">{{ t('history') }}</el-dropdown-item>
+                                <el-dropdown-item :icon="Tickets" @click="openHistory(scope.row)">{{ t('history') }}</el-dropdown-item>
                                 <el-dropdown-item :icon="Edit" @click="editItem(scope.row)">{{ t('tipEdit') }}</el-dropdown-item>
                                 <el-dropdown-item :icon="Delete" @click="confirmDelete(scope.row)" divided class="text-red-500">{{ t('tipDelete') }}</el-dropdown-item>
                               </el-dropdown-menu>
@@ -2011,9 +2014,49 @@ const HTML = `<!DOCTYPE html>
                 <!-- Spending View -->
                 <template v-else>
                     <div class="spending-dashboard animate-fade-in" v-if="spendingStats.hasData">
-                        <!-- Header & Toggle -->
-                        <div class="flex justify-between items-center mb-6">
-                             <div class="text-xs font-bold font-mono tracking-widest text-gray-500 dark:text-gray-400">{{ t('spendingDashboard') }}</div>
+                         <!-- Header & Toggle -->
+                         <div class="flex justify-between items-center mb-6">
+                            <el-popover placement="bottom-start" :width="320" trigger="click" popper-class="!p-0 !bg-slate-900 !border-slate-700">
+                                <template #reference>
+                                     <div class="flex items-center gap-2 cursor-pointer group select-none">
+                                         <div class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+                                             <el-icon :class="upcoming7DaysBills.length>0?'animate-pulse text-amber-500':'text-gray-400'"><Bell /></el-icon>
+                                             <div v-if="upcoming7DaysBills.length > 0" class="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full px-1 shadow-sm ring-2 ring-white dark:ring-slate-900">
+                                                 {{ upcoming7DaysBills.length }}
+                                             </div>
+                                         </div>
+                                         <div class="flex flex-col justify-center h-8">
+                                             <span class="text-xs font-bold font-mono text-slate-700 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">{{ t('upcomingBills').replace('%s', settings.upcomingBillsDays || 7) }}</span>
+                                         </div>
+                                     </div>
+                                </template>
+                                <!-- Popover Content -->
+                                <div class="flex flex-col max-h-[300px] overflow-y-auto custom-scrollbar">
+                                    <div class="px-4 py-3 border-b border-slate-800 bg-slate-900/50 sticky top-0 z-10 backdrop-blur flex justify-between items-center">
+                                        <div class="text-xs font-bold font-mono text-gray-400">{{ t('filter.w7').replace('%s', settings.upcomingBillsDays || 7) }}</div>
+                                        <div class="text-xs font-bold font-mono text-cyan-400" v-if="upcoming7DaysBills.length > 0">{{ upcoming7DaysTotal }}</div>
+                                    </div>
+                                    <div v-if="upcoming7DaysBills.length > 0" class="p-2 space-y-1">
+                                         <div v-for="(bill, idx) in upcoming7DaysBills" :key="'up-'+idx" class="flex justify-between items-center p-2 rounded hover:bg-slate-800/50 transition-colors cursor-default group">
+                                             <div class="flex flex-col overflow-hidden mr-3">
+                                                 <div class="flex items-center gap-1">
+                                                     <span class="text-xs font-bold font-mono text-slate-300 truncate">{{ bill.name }}</span>
+                                                     <span v-if="bill.isProjected" class="text-[9px] px-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 scale-90 origin-left whitespace-nowrap">{{ t('predictedTag') }}</span>
+                                                 </div>
+                                                 <span class="text-xs text-amber-500 font-mono font-bold">{{ bill.days === 0 ? (lang==='zh'?'今天':'TODAY') : bill.days + (lang==='zh'?' 天剩余':' DAYS LEFT') }}</span>
+                                             </div>
+                                             <div class="text-right shrink-0">
+                                                  <div class="text-xs font-bold font-mono text-cyan-400">{{ bill.amount }} <span class="text-[9px] opacity-70">{{ bill.currency }}</span></div>
+                                             </div>
+                                         </div>
+                                    </div>
+                                    <div v-else class="p-8 text-center">
+                                        <el-icon class="text-4xl text-slate-800 mb-2"><files /></el-icon>
+                                        <div class="text-xs text-gray-600 font-mono">{{ t('noData') }}</div>
+                                    </div>
+                                </div>
+                            </el-popover>
+
                              <div class="flex bg-gray-200 dark:bg-slate-800 rounded-lg p-1 border border-gray-300 dark:border-slate-700">
                                  <button @click="spendingMode='bill'" :class="['px-3 py-1 text-xs font-mono rounded transition-all', spendingMode==='bill' ? 'bg-cyan-600 text-white shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white']">{{ t('billAmount') }}</button>
                                  <button @click="spendingMode='op'" :class="['px-3 py-1 text-xs font-mono rounded transition-all', spendingMode==='op' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white']">{{ t('opSpending') }}</button>
@@ -2209,7 +2252,7 @@ const HTML = `<!DOCTYPE html>
                                      
                                      <!-- Selected Period Big Number -->
                                      <div class="mb-6">
-                                          <div class="text-[10px] text-gray-400 font-mono mb-1">{{ spendingStats[spendingMode].selectedInfo?.label === '12M' ? t('last12M') : spendingStats[spendingMode].selectedInfo?.label }} {{ t('total') }}</div>
+                                          <div class="text-xs text-gray-400 font-mono mb-1">{{ spendingStats[spendingMode].selectedInfo?.label === '12M' ? t('last12M') : spendingStats[spendingMode].selectedInfo?.label }} {{ t('total') }}</div>
                                           <div class="text-3xl font-bold font-mono tracking-tight" :class="spendingMode==='bill' ? 'text-cyan-500' : 'text-purple-500'">
                                               {{ parseFloat(spendingStats[spendingMode].selectedInfo?.total || 0).toFixed(2) }} <span class="text-lg opacity-70">{{ settings.defaultCurrency || 'CNY' }}</span>
                                           </div>
@@ -2453,13 +2496,18 @@ const HTML = `<!DOCTYPE html>
                                 <el-option v-for="c in currencyList" :key="c" :label="c" :value="c"></el-option>
                             </el-select>
                         </el-form-item>
-                        <el-form-item :label="t('autoDisableThreshold')"><el-input-number v-model="settingsForm.autoDisableDays" :min="1" class="!w-full"></el-input-number></el-form-item>
+                        <el-form-item :label="t('autoDisableThreshold')"><el-input-number v-model="settingsForm.autoDisableDays" :min="1" :max="365" class="!w-full"></el-input-number></el-form-item>
+                        <el-form-item :label="t('upcomingBillsDays')"><el-input-number v-model="settingsForm.upcomingBillsDays" :min="1" :max="365" class="!w-full"></el-input-number></el-form-item>
                     </div>
 
                     <h4 class="text-xs font-bold text-blue-600 mb-4 mt-4 border-b border-gray-300 pb-2 uppercase">{{ t('secNotify') }}</h4>
                     <div class="flex items-center gap-4 mb-4">
                         <span class="text-sm font-bold text-slate-700">{{ t('pushSwitch') }}</span>
                         <el-switch v-model="settingsForm.enableNotify" style="--el-switch-on-color:#2563eb;"></el-switch>
+                        <div v-if="settingsForm.enableNotify" class="ml-auto flex items-center gap-2">
+                            <span class="text-xs text-gray-500">{{ t('lblPushTitle') || 'Title' }}</span>
+                            <el-input v-model="settingsForm.notifyTitle" :placeholder="t('pushTitle')" size="small" class="!w-48"></el-input>
+                        </div>
                     </div>
                     
                     <div v-if="settingsForm.enableNotify">
@@ -2517,7 +2565,7 @@ const HTML = `<!DOCTYPE html>
                             <el-collapse-item name="ntfy">
                                 <template #title>
                                     <div class="flex items-center w-full pr-4">
-                                        <el-icon class="mr-2 text-lg"><Promotion /></el-icon>
+                                        <el-icon class="mr-2 text-lg"><Position /></el-icon>
                                         <span class="font-bold flex-1">Ntfy</span>
                                         <el-switch v-model="channelMap.ntfy" style="--el-switch-on-color:#2563eb;" @change="toggleChannel('ntfy')" @click.stop></el-switch>
                                     </div>
@@ -2534,7 +2582,7 @@ const HTML = `<!DOCTYPE html>
                             <el-collapse-item name="pushplus">
                                 <template #title>
                                     <div class="flex items-center w-full pr-4">
-                                        <el-icon class="mr-2 text-lg"><Message /></el-icon>
+                                        <el-icon class="mr-2 text-lg"><Comment /></el-icon>
                                         <span class="font-bold flex-1">PushPlus</span>
                                         <el-switch v-model="channelMap.pushplus" style="--el-switch-on-color:#2563eb;" @change="toggleChannel('pushplus')" @click.stop></el-switch>
                                     </div>
@@ -2549,7 +2597,7 @@ const HTML = `<!DOCTYPE html>
                             <el-collapse-item name="notifyx">
                                 <template #title>
                                     <div class="flex items-center w-full pr-4">
-                                        <el-icon class="mr-2 text-lg"><Bell /></el-icon>
+                                        <el-icon class="mr-2 text-lg"><Notification /></el-icon>
                                         <span class="font-bold flex-1">NotifyX</span>
                                         <el-switch v-model="channelMap.notifyx" style="--el-switch-on-color:#2563eb;" @change="toggleChannel('notifyx')" @click.stop></el-switch>
                                     </div>
@@ -2581,7 +2629,7 @@ const HTML = `<!DOCTYPE html>
                             <el-collapse-item name="webhook">
                                 <template #title>
                                     <div class="flex items-center w-full pr-4">
-                                        <el-icon class="mr-2 text-lg"><Link /></el-icon>
+                                        <el-icon class="mr-2 text-lg"><Connection /></el-icon>
                                         <span class="font-bold flex-1">Webhook 1</span>
                                         <el-switch v-model="channelMap.webhook" style="--el-switch-on-color:#2563eb;" @change="toggleChannel('webhook')" @click.stop></el-switch>
                                     </div>
@@ -2598,7 +2646,7 @@ const HTML = `<!DOCTYPE html>
                             <el-collapse-item name="webhook2">
                                 <template #title>
                                     <div class="flex items-center w-full pr-4">
-                                        <el-icon class="mr-2 text-lg"><Link /></el-icon>
+                                        <el-icon class="mr-2 text-lg"><Connection /></el-icon>
                                         <span class="font-bold flex-1">Webhook 2</span>
                                         <el-switch v-model="channelMap.webhook2" style="--el-switch-on-color:#2563eb;" @change="toggleChannel('webhook2')" @click.stop></el-switch>
                                     </div>
@@ -2615,7 +2663,7 @@ const HTML = `<!DOCTYPE html>
                             <el-collapse-item name="webhook3">
                                 <template #title>
                                     <div class="flex items-center w-full pr-4">
-                                        <el-icon class="mr-2 text-lg"><Link /></el-icon>
+                                        <el-icon class="mr-2 text-lg"><Connection /></el-icon>
                                         <span class="font-bold flex-1">Webhook 3</span>
                                         <el-switch v-model="channelMap.webhook3" style="--el-switch-on-color:#2563eb;" @change="toggleChannel('webhook3')" @click.stop></el-switch>
                                     </div>
@@ -2866,7 +2914,7 @@ const HTML = `<!DOCTYPE html>
     <script>
         const { createApp, ref, computed, onMounted, onUnmounted, nextTick, reactive,watch } = Vue;
         const { ElMessage, ElMessageBox } = ElementPlus;
-        const { Edit, Delete, Plus, VideoPlay, Setting, Bell, Document, Lock, Monitor, SwitchButton, Calendar, Timer, Files, AlarmClock, Warning, Search, Cpu, Upload, Download, Link, Message, Promotion, Iphone, Moon, Sunny, RefreshRight, More, ArrowDown } = ElementPlusIconsVue;
+        const { Edit, Delete, Plus, VideoPlay, Setting, Bell, Document, Lock, Monitor, SwitchButton, Calendar, Timer, Files, AlarmClock, Warning, Search, Cpu, Upload, Download, Link, Connection, Message, Promotion, Iphone, Moon, Sunny, RefreshRight, More, ArrowDown, Tickets } = ElementPlusIconsVue;
         const ZhCn = window.ElementPlusLocaleZhCn || {};
         const frontendCalc = {
             l2s(l) {
@@ -2911,22 +2959,22 @@ const HTML = `<!DOCTYPE html>
             }
         };
         const messages = {
-            zh: { filter:{expired:'已过期 / 今天', w7:'7天内', w30:'30天内', thisMonth:'本月内', nextMonth:'下月内', halfYear:'半年内', oneYear:'1年内', new:'新服务 (<30天)', stable:'稳定 (1个月-1年)', long:'长期 (>1年)', m1:'最近1个月', m6:'半年内', year:'今年内', earlier:'更早以前'}, viewSwitch:'视图切换',viewProjects:'项目列表',viewSpending:'支出分析',annualSummary:'年度汇总',monthlyTrend:'月度趋势',noSpendingData:'暂无支出数据',avgMonthly:'月均',billAmount:'账单金额 (按账单周期)',opSpending:'实际支出 (按操作日期)',secPref: '偏好设置',manualRenew: '手动续期',tipToggle: '切换状态',tipRenew: '手动续期',tipEdit: '编辑服务',tipDelete: '删除服务',secNotify: '通知配置',secData: '数据管理',lblIcsTitle: '日历订阅',lblIcsUrl: '订阅地址 (iOS/Google)',btnCopy: '复制',btnResetToken: '重置令牌',loginTitle:'身份验证',passwordPlaceholder:'请输入访问密钥/Authorization Key',unlockBtn:'解锁终端/UNLOCK',check:'立即检查',add:'新增服务',settings:'系统设置',logs:'运行日志',logout:'安全退出',totalServices:'服务总数',expiringSoon:'即将到期',expiredAlert:'已过期 / 警告',serviceName:'服务名称',type:'类型',nextDue:'下次到期',uptime:'已运行',lastRenew:'上次续期',cyclePeriod:'周期',actions:'操作',cycle:'循环订阅',reset:'到期重置',disabled:'已停用',days:'天',daysUnit:'天',typeReset:'到期重置',typeCycle:'循环订阅',lunarCal:'农历',lbOffline:'离线',unit:{day:'天',month:'月',year:'年'},editService:'编辑服务',newService:'新增服务',formName:'名称',namePlaceholder:'例如: Netflix',formType:'模式',createDate:'创建时间',interval:'周期时长',note:'备注信息',status:'状态',active:'启用',disabledText:'禁用',cancel:'取消',save:'保存数据',saveSettings:'保存配置',settingsTitle:'系统设置',setNotify:'通知配置',pushSwitch:'推送总开关',pushUrl:'Webhook 地址',notifyThreshold:'提醒阈值',setAuto:'自动化配置',autoRenewSwitch:'自动续期',autoRenewThreshold:'自动续期阈值',autoDisableThreshold:'自动禁用阈值',daysOverdue:'天后触发',sysLogs:'系统日志',execLogs:'执行记录',clearHistory:'清空历史',noLogs:'无记录',liveLog:'实时终端',btnExport: '导出备份',btnImport: '恢复备份',btnTest: '发送测试',btnRefresh:'刷新日志',
+            zh: { upcomingBillsDays:'待付款提醒天数', upcomingBills: '%s日内待付款项', filter:{expired:'已过期 / 今天', w7:'%s天内', w30:'30天内', thisMonth:'本月内', nextMonth:'下月内', halfYear:'半年内', oneYear:'1年内', new:'新服务 (<30天)', stable:'稳定 (1个月-1年)', long:'长期 (>1年)', m1:'最近1个月', m6:'半年内', year:'今年内', earlier:'更早以前'}, viewSwitch:'视图切换',viewProjects:'项目列表',viewSpending:'支出分析',annualSummary:'年度汇总',monthlyTrend:'月度趋势',noSpendingData:'暂无支出数据',avgMonthly:'月均',billAmount:'账单金额 (按账单周期)',opSpending:'实际支出 (按操作日期)',secPref: '偏好设置',manualRenew: '手动续期',tipToggle: '切换状态',tipRenew: '手动续期',tipEdit: '编辑服务',tipDelete: '删除服务',secNotify: '通知配置',secData: '数据管理',lblIcsTitle: '日历订阅',lblIcsUrl: '订阅地址 (iOS/Google)',btnCopy: '复制',btnResetToken: '重置令牌',loginTitle:'身份验证',passwordPlaceholder:'请输入访问密钥/Authorization Key',unlockBtn:'解锁终端/UNLOCK',check:'立即检查',add:'新增服务',settings:'系统设置',logs:'运行日志',logout:'安全退出',totalServices:'服务总数',expiringSoon:'即将到期',expiredAlert:'已过期 / 警告',serviceName:'服务名称',type:'类型',nextDue:'下次到期',uptime:'已运行',lastRenew:'上次续期',cyclePeriod:'周期',actions:'操作',cycle:'循环订阅',reset:'到期重置',disabled:'已停用',days:'天',daysUnit:'天',typeReset:'到期重置',typeCycle:'循环订阅',lunarCal:'农历',lbOffline:'离线',unit:{day:'天',month:'月',year:'年'},editService:'编辑服务',newService:'新增服务',formName:'名称',namePlaceholder:'例如: Netflix',formType:'模式',createDate:'创建时间',interval:'周期时长',note:'备注信息',status:'状态',active:'启用',disabledText:'禁用',cancel:'取消',save:'保存数据',saveSettings:'保存配置',settingsTitle:'系统设置',setNotify:'通知配置',pushSwitch:'推送总开关',pushUrl:'Webhook 地址',notifyThreshold:'提醒阈值',setAuto:'自动化配置',autoRenewSwitch:'自动续期',autoRenewThreshold:'自动续期阈值',autoDisableThreshold:'自动禁用阈值',daysOverdue:'天后触发',sysLogs:'系统日志',execLogs:'执行记录',clearHistory:'清空历史',noLogs:'无记录',liveLog:'实时终端',btnExport: '导出备份',btnImport: '恢复备份',btnTest: '发送测试',btnRefresh:'刷新日志',
             lblEnable: '启用', lblToken: '令牌 (Token)', lblApiKey: 'API Key', lblChatId: '会话ID', 
             lblServer: '服务器URL', lblDevKey: '设备Key', lblFrom: '发件人', lblTo: '收件人',
             lblTopic: '主题 (Topic)',readOnly: '只读',
             lblNotifyTime: '提醒时间', btnResetToken: '重置令牌',
             lblHeaders: '请求头 (JSON)', lblBody: '消息体 (JSON)',
             tag:{alert:'触发提醒',renew:'自动续期',disable:'自动禁用',normal:'检查正常'},tagLatest:'最新',tagAuto:'自动',tagManual:'手动',msg:{confirmRenew: '确认将 [%s] 的更新日期设置为今天吗？',renewSuccess: '续期成功！日期已更新: %s -> %t',tokenReset: '令牌已重置，请更新订阅地址', copyOk: '链接已复制', exportSuccess: '备份已下载',importSuccess: '数据恢复成功，即将刷新',importFail: '导入失败，请检查文件格式',passReq:'请输入密码',saved:'保存成功',saveFail:'保存失败',cleared:'已清空',clearFail:'清空失败',loginFail:'验证失败',loadLogFail:'日志加载失败',confirmDel:'确认删除此项目?',dateError:'上次更新日期不能早于创建日期',nameReq:'服务名称不能为空',nameExist:'服务名称已存在',futureError:'上次续期不能是未来时间',serviceDisabled:'服务已停用',serviceEnabled:'服务已启用',execFinish: '执行完毕!'},tags:'标签',tagPlaceholder:'输入标签回车创建',searchPlaceholder:'搜索标题或备注...',tagsCol:'标签',tagAll:'全部',useLunar:'农历周期',lunarTip:'按农历日期计算周期',yes:'是',no:'否',timezone:'偏好时区',disabledFilter:'已停用',policyConfig:'自动化策略',policyNotify:'提醒提前期',policyAuto:'自动续期',policyRenewDay:'过期续期天数',useGlobal:'全局默认',autoRenewOnDesc:'过期自动续期',autoRenewOffDesc:'过期自动禁用',previewCalc:'根据上次续期日期和周期计算',nextDue:'下次到期',
-            fixedPrice:'账单额',currency:'币种',defaultCurrency:'默认币种',history:'历史记录',historyTitle:'续费历史',totalCost:'总花费',totalCount:'续费次数',renewDate:'操作日期',billPeriod:'账单周期',startDate:'开始日期',endDate:'结束日期',actualPrice:'实付金额',notePlaceholder:'可选备注...',btnAddHist:'补录历史',modify:'修改',confirmDelHist:'删除此记录?',opDate:'操作日',amount:'金额',period:'周期',spendingDashboard:'花销看板',monthlyBreakdown:'月度明细',total:'总计',count:'笔',growth:'环比',currMonth:'本月',avgMonthlyLabel:'月均支出',itemDetails:'项目明细',noData:'暂无数据',predictedTag:'预测',last12M:'最近12个月'},
-            en: { viewSwitch:'VIEW SWITCH',viewProjects:'PROJECTS',viewSpending:'DASHBOARD',annualSummary:'Annual Summary',monthlyTrend:'Monthly Trend',noSpendingData:'No Spending Data',billAmount:'BILL AMOUNT',opSpending:'ACTUAL COST', avgMonthly:'AVG', avgMonthlyLabel:'AVG MONTHLY', filter:{expired:'Overdue/Today', w7:'Within 7 Days', w30:'Within 30 Days', future:'Future(>30d)', new:'New (<30d)', stable:'Stable (1m-1y)', long:'Long Term (>1y)', m1:'Last Month', m6:'Last 6 Months', year:'This Year', earlier:'Earlier'}, secPref: 'PREFERENCES',manualRenew: 'Quick Renew',tipToggle: 'Toggle Status',tipRenew: 'Quick Renew',tipEdit: 'Edit Service',tipDelete: 'Delete Service',secNotify: 'NOTIFICATIONS',secData: 'DATA MANAGEMENT',lblIcsTitle: 'CALENDAR SUBSCRIPTION',lblIcsUrl: 'ICS URL (iOS/Google Calendar)',btnCopy: 'COPY',btnResetToken: 'RESET TOKEN',loginTitle:'SYSTEM ACCESS',passwordPlaceholder:'Authorization Key',unlockBtn:'UNLOCK TERMINAL',check:'CHECK',add:'ADD NEW',settings:'CONFIG',logs:'LOGS',logout:'LOGOUT',totalServices:'TOTAL SERVICES',expiringSoon:'EXPIRING SOON',expiredAlert:'EXPIRED / ALERT',serviceName:'SERVICE NAME',type:'TYPE',nextDue:'NEXT DUE',uptime:'UPTIME',lastRenew:'LAST RENEW',cyclePeriod:'CYCLE',actions:'ACTIONS',cycle:'CYCLE',reset:'RESET',disabled:'DISABLED',days:'DAYS',daysUnit:'DAYS',typeReset:'RESET',typeCycle:'CYCLE',lunarCal:'Lunar',lbOffline:'OFFLINE',unit:{day:'DAY',month:'MTH',year:'YR'},editService:'EDIT SERVICE',newService:'NEW SERVICE',formName:'NAME',namePlaceholder:'e.g. Netflix',formType:'MODE',createDate:'CREATE DATE',interval:'INTERVAL',note:'NOTE',status:'STATUS',active:'ACTIVE',disabledText:'DISABLED',cancel:'CANCEL',save:'SAVE DATA',saveSettings:'SAVE CONFIG',settingsTitle:'SYSTEM CONFIG',setNotify:'NOTIFICATION',pushSwitch:'MASTER PUSH',pushUrl:'WEBHOOK URL',notifyThreshold:'ALERT THRESHOLD',setAuto:'AUTOMATION',autoRenewSwitch:'AUTO RENEW',autoRenewThreshold:'RENEW AFTER',autoDisableThreshold:'DISABLE AFTER',daysOverdue:'DAYS OVERDUE',sysLogs:'SYSTEM LOGS',execLogs:'EXECUTION LOGS',clearHistory:'CLEAR HISTORY',noLogs:'NO DATA',liveLog:'LIVE TERMINAL',btnExport: 'Export Data',btnImport: 'Import Data',btnTest: 'Send Test',btnRefresh:'REFRESH',last12M:'LAST 12M',
+            fixedPrice:'账单额',currency:'币种',defaultCurrency:'默认币种',history:'历史记录',historyTitle:'续费历史',totalCost:'总花费',totalCount:'续费次数',renewDate:'操作日期',billPeriod:'账单周期',startDate:'开始日期',endDate:'结束日期',actualPrice:'实付金额',notePlaceholder:'可选备注...',btnAddHist:'补录历史',modify:'修改',confirmDelHist:'删除此记录?',opDate:'操作日',amount:'金额',period:'周期',spendingDashboard:'花销看板',monthlyBreakdown:'月度明细',total:'总计',count:'笔',growth:'环比',currMonth:'本月',avgMonthlyLabel:'月均支出',itemDetails:'项目明细',noData:'暂无数据',predictedTag:'预测',last12M:'最近12个月', lblPushTitle:'自定义标题', pushTitle:'RenewHelper 报告'},
+            en: { upcomingBillsDays:'Pending Reminder', upcomingBills: '%s Days Pending', viewSwitch:'VIEW SWITCH',viewProjects:'PROJECTS',viewSpending:'DASHBOARD',annualSummary:'Annual Summary',monthlyTrend:'Monthly Trend',noSpendingData:'No Spending Data',billAmount:'BILL AMOUNT',opSpending:'ACTUAL COST', avgMonthly:'AVG', avgMonthlyLabel:'AVG MONTHLY', filter:{expired:'Overdue/Today', w7:'Within %s Days', w30:'Within 30 Days', future:'Future(>30d)', new:'New (<30d)', stable:'Stable (1m-1y)', long:'Long Term (>1y)', m1:'Last Month', m6:'Last 6 Months', year:'This Year', earlier:'Earlier'}, secPref: 'PREFERENCES',manualRenew: 'Quick Renew',tipToggle: 'Toggle Status',tipRenew: 'Quick Renew',tipEdit: 'Edit Service',tipDelete: 'Delete Service',secNotify: 'NOTIFICATIONS',secData: 'DATA MANAGEMENT',lblIcsTitle: 'CALENDAR SUBSCRIPTION',lblIcsUrl: 'ICS URL (iOS/Google Calendar)',btnCopy: 'COPY',btnResetToken: 'RESET TOKEN',loginTitle:'SYSTEM ACCESS',passwordPlaceholder:'Authorization Key',unlockBtn:'UNLOCK TERMINAL',check:'CHECK',add:'ADD NEW',settings:'CONFIG',logs:'LOGS',logout:'LOGOUT',totalServices:'TOTAL SERVICES',expiringSoon:'EXPIRING SOON',expiredAlert:'EXPIRED / ALERT',serviceName:'SERVICE NAME',type:'TYPE',nextDue:'NEXT DUE',uptime:'UPTIME',lastRenew:'LAST RENEW',cyclePeriod:'CYCLE',actions:'ACTIONS',cycle:'CYCLE',reset:'RESET',disabled:'DISABLED',days:'DAYS',daysUnit:'DAYS',typeReset:'RESET',typeCycle:'CYCLE',lunarCal:'Lunar',lbOffline:'OFFLINE',unit:{day:'DAY',month:'MTH',year:'YR'},editService:'EDIT SERVICE',newService:'NEW SERVICE',formName:'NAME',namePlaceholder:'e.g. Netflix',formType:'MODE',createDate:'CREATE DATE',interval:'INTERVAL',note:'NOTE',status:'STATUS',active:'ACTIVE',disabledText:'DISABLED',cancel:'CANCEL',save:'SAVE DATA',saveSettings:'SAVE CONFIG',settingsTitle:'SYSTEM CONFIG',setNotify:'NOTIFICATION',pushSwitch:'MASTER PUSH',pushUrl:'WEBHOOK URL',notifyThreshold:'ALERT THRESHOLD',setAuto:'AUTOMATION',autoRenewSwitch:'AUTO RENEW',autoRenewThreshold:'RENEW AFTER',autoDisableThreshold:'DISABLE AFTER',daysOverdue:'DAYS OVERDUE',sysLogs:'SYSTEM LOGS',execLogs:'EXECUTION LOGS',clearHistory:'CLEAR HISTORY',noLogs:'NO DATA',liveLog:'LIVE TERMINAL',btnExport: 'Export Data',btnImport: 'Import Data',btnTest: 'Send Test',btnRefresh:'REFRESH',last12M:'LAST 12M',
             lblEnable: 'Enable', lblToken: 'Token', lblApiKey: 'API Key', lblChatId: 'Chat ID', 
             lblServer: 'Server URL', lblDevKey: 'Device Key', lblFrom: 'From Email', lblTo: 'To Email',
             lblTopic: 'Topic',readOnly: 'Read-only',
             lblNotifyTime: 'Alarm Time', btnResetToken: 'RESET TOKEN',
             lblHeaders: 'Headers (JSON)', lblBody: 'Body (JSON)',
             tag:{alert:'ALERT',renew:'RENEWED',disable:'DISABLED',normal:'NORMAL'},tagLatest:'LATEST',tagAuto:'AUTO',tagManual:'MANUAL',msg:{confirmRenew: 'Renew [%s] to today based on your timezone?',renewSuccess: 'Renewed! Date updated: %s -> %t',tokenReset: 'Token Reset. Update your calendar apps.', copyOk: 'Link Copied', exportSuccess: 'Backup Downloaded',importSuccess: 'Restore Success, Refreshing...',importFail: 'Import Failed, Check File Format',passReq:'Password Required',saved:'Data Saved',saveFail:'Save Failed',cleared:'Cleared',clearFail:'Clear Failed',loginFail:'Access Denied',loadLogFail:'Load Failed',confirmDel:'Confirm Delete?',dateError:'Last renew date cannot be earlier than create date',nameReq:'Name Required',nameExist:'Name already exists',futureError:'Renew date cannot be in the future',serviceDisabled:'Service Disabled',serviceEnabled:'Service Enabled',execFinish: 'EXECUTION FINISHED!'},tags:'TAGS',tagPlaceholder:'Press Enter to create tag',searchPlaceholder:'Search...',tagsCol:'TAGS',tagAll:'ALL',useLunar:'Lunar Cycle',lunarTip:'Calculate based on Lunar calendar',yes:'Yes',no:'No',timezone:'Timezone',disabledFilter:'DISABLED',policyConfig:'Policy Config',policyNotify:'Notify Days',policyAuto:'Auto Renew',policyRenewDay:'Renew Days',useGlobal:'Global Default',autoRenewOnDesc:'Auto Renew when overdue',autoRenewOffDesc:'Auto Disable when overdue',previewCalc:'Based on Last Renew Date & Interval',nextDue:'NEXT DUE',
-            fixedPrice:'PRICE',currency:'Currency',defaultCurrency:'Default Currency',history:'History',historyTitle:'Renewal History',totalCost:'Total Cost',totalCount:'Total Count',renewDate:'Op Date',billPeriod:'Bill Period',startDate:'Start Date',endDate:'End Date',actualPrice:'Actual Price',notePlaceholder:'Optional note...',btnAddHist:'Add Record',modify:'Edit',confirmDelHist:'Delete record?',opDate:'Op Date',amount:'Amount',period:'Period',spendingDashboard:'SPENDING DASHBOARD',monthlyBreakdown:'MONTHLY BREAKDOWN',total:'TOTAL',count:'COUNT',growth:'GROWTH',currMonth:'CURRENT',itemDetails:'ITEMS',noData:'NO DATA',predictedTag:'PREDICTED'}
+            fixedPrice:'PRICE',currency:'Currency',defaultCurrency:'Default Currency',history:'History',historyTitle:'Renewal History',totalCost:'Total Cost',totalCount:'Total Count',renewDate:'Op Date',billPeriod:'Bill Period',startDate:'Start Date',endDate:'End Date',actualPrice:'Actual Price',notePlaceholder:'Optional note...',btnAddHist:'Add Record',modify:'Edit',confirmDelHist:'Delete record?',opDate:'Op Date',amount:'Amount',period:'Period',spendingDashboard:'SPENDING DASHBOARD',monthlyBreakdown:'MONTHLY BREAKDOWN',total:'TOTAL',count:'COUNT',growth:'GROWTH',currMonth:'CURRENT',itemDetails:'ITEMS',noData:'NO DATA',predictedTag:'PREDICTED', lblPushTitle:'Push Title', pushTitle:'RenewHelper Report'}
         };
         const LUNAR={info:[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04bd7,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,0x0d520],gan:'甲乙丙丁戊己庚辛壬癸'.split(''),zhi:'子丑寅卯辰巳午未申酉戌亥'.split(''),months:'正二三四五六七八九十冬腊'.split(''),days:'初一,初二,初三,初四,初五,初六,初七,初八,初九,初十,十一,十二,十三,十四,十五,十六,十七,十八,十九,二十,廿一,廿二,廿三,廿四,廿五,廿六,廿七,廿八,廿九,三十'.split(','),lYearDays(y){let s=348;for(let i=0x8000;i>0x8;i>>=1)s+=(this.info[y-1900]&i)?1:0;return s+this.leapDays(y)},leapDays(y){if(this.leapMonth(y))return(this.info[y-1900]&0x10000)?30:29;return 0},leapMonth(y){return this.info[y-1900]&0xf},monthDays(y,m){return(this.info[y-1900]&(0x10000>>m))?30:29},solar2lunar(y,m,d){if(y<1900||y>2100)return null;const base=new Date(1900,0,31),obj=new Date(y,m-1,d);let offset=Math.round((obj-base)/86400000);let ly=1900,temp=0;for(;ly<2101&&offset>0;ly++){temp=this.lYearDays(ly);offset-=temp}if(offset<0){offset+=temp;ly--}let lm=1,leap=this.leapMonth(ly),isLeap=false;for(;lm<13&&offset>0;lm++){if(leap>0&&lm===(leap+1)&&!isLeap){--lm;isLeap=true;temp=this.leapDays(ly)}else{temp=this.monthDays(ly,lm)}if(isLeap&&lm===(leap+1))isLeap=false;offset-=temp}if(offset===0&&leap>0&&lm===leap+1){if(isLeap)isLeap=false;else{isLeap=true;--lm}}if(offset<0){offset+=temp;--lm}const ld=offset+1,gIdx=(ly-4)%10,zIdx=(ly-4)%12;const yStr=this.gan[gIdx<0?gIdx+10:gIdx]+this.zhi[zIdx<0?zIdx+12:zIdx];const mStr=(isLeap?'闰':'')+this.months[lm-1]+'月';return{year:ly,month:lm,day:ld,isLeap,yearStr:yStr,monthStr:mStr,dayStr:this.days[ld-1],fullStr:yStr+'年'+mStr+this.days[ld-1]}}};
         
@@ -2971,9 +3019,9 @@ const HTML = `<!DOCTYPE html>
             return null;
         };
 
-        createApp({
+        const app = createApp({
             setup() {
-                const isLoggedIn = ref(!!localStorage.getItem('jwt_token')), password = ref(''), loading = ref(false), list = ref([]), settings = ref({});
+                const isLoggedIn = ref(!!localStorage.getItem('jwt_token')), password = ref(''), loading = ref(false), list = ref([]), settings = ref({ upcomingBillsDays: 7 });
                 const dataVersion = ref(0); // 新增版本号状态
                 const dialogVisible = ref(false), settingsVisible = ref(false), historyVisible = ref(false), historyLoading = ref(false), historyLogs = ref([]);
                 const checking = ref(false), logs = ref([]), displayLogs = ref([]), isEdit = ref(false), lang = ref('zh'), currentTag = ref(''), searchKeyword = ref('');
@@ -2988,6 +3036,8 @@ const HTML = `<!DOCTYPE html>
                     notifyUrl:'', 
                     enableNotify:true, 
                     autoDisableDays:30, 
+                    upcomingBillsDays: 7,
+                    notifyTitle: '',
                     timezone:'UTC',
                     defaultCurrency:'CNY',
                     enabledChannels: [],
@@ -3297,6 +3347,95 @@ const HTML = `<!DOCTYPE html>
                 });
 
                 const disabledCount = computed(() => list.value.filter(i => !i.enabled).length);
+                const upcoming7DaysBills = computed(() => {
+                    const daysLimit = settings.value.upcomingBillsDays || 7;
+                    const results = [];
+                    const todayDate = parseYMD(getLocalToday()); // Use local today for diff calc
+
+                    list.value.forEach(i => {
+                        if (!i.enabled) return;
+
+                        // 1. Current Next Due (Existing Logic)
+                        if (i.daysLeft >= 0 && i.daysLeft <= daysLimit) {
+                            results.push({
+                                name: i.name,
+                                days: i.daysLeft,
+                                amount: i.fixedPrice,
+                                currency: i.currency || settings.value.defaultCurrency,
+                                isProjected: false
+                            });
+                        }
+
+                        // 2. Future Projections (Auto-Renew)
+                        if (i.autoRenew && i.intervalDays && i.nextDueDate) {
+                            let currentBaseDate;
+                            try { currentBaseDate = parseYMD(i.nextDueDate); } catch(e) { return; }
+                            
+                            const unit = i.cycleUnit || 'day';
+                            const val = parseInt(i.intervalDays) || 1;
+
+                            // Prevent infinite loop if interval is 0 (safety)
+                            if (val <= 0) return;
+
+                            while (true) {
+                                // Advance date
+                                let nextDate;
+                                if (i.useLunar && typeof LUNAR !== 'undefined' && typeof frontendCalc !== 'undefined') {
+                                    const y = currentBaseDate.getFullYear(), m = currentBaseDate.getMonth() + 1, d = currentBaseDate.getDate();
+                                    const l = LUNAR.solar2lunar(y, m, d);
+                                    if (!l) break;
+                                    const nextL = frontendCalc.addPeriod({ year: l.year, month: l.month, day: l.day, isLeap: l.isLeap }, val, unit);
+                                    const nextS = frontendCalc.l2s(nextL);
+                                    nextDate = new Date(nextS.year, nextS.month - 1, nextS.day);
+                                } else {
+                                    nextDate = new Date(currentBaseDate);
+                                    if (unit === 'year') nextDate.setFullYear(nextDate.getFullYear() + val);
+                                    else if (unit === 'month') nextDate.setMonth(nextDate.getMonth() + val);
+                                    else nextDate.setDate(nextDate.getDate() + val);
+                                }
+
+                                // Update base for next iteration
+                                currentBaseDate = nextDate;
+
+                                // Calculate diff
+                                const diffTime = nextDate - todayDate;
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                if (diffDays > daysLimit) break;
+
+                                // Only add valid future dates
+                                if (diffDays >= 0) {
+                                    results.push({
+                                        name: i.name,
+                                        days: diffDays,
+                                        amount: i.fixedPrice,
+                                        currency: i.currency || settings.value.defaultCurrency,
+                                        isProjected: true
+                                    });
+                                }
+                            }
+                        }
+                    });
+
+                    return results.sort((a, b) => a.days - b.days);
+                });
+                const upcoming7DaysTotal = computed(() => {
+                    const rates = exchangeRates.value || {};
+                    const defaultCur = settings.value.defaultCurrency || 'CNY';
+                    let total = 0;
+                    upcoming7DaysBills.value.forEach(bill => {
+                        const price = parseFloat(bill.amount) || 0;
+                        const cur = bill.currency || defaultCur;
+                         if (cur === defaultCur) {
+                            total += price;
+                        } else if (rates[cur]) {
+                            total += price / rates[cur];
+                        } else {
+                            total += price; // Fallback
+                        }
+                    });
+                    return '≈ ' + total.toFixed(2) + ' ' + defaultCur;
+                });
                 const allTags = computed(() => { const s=new Set(); list.value.forEach(i=>(i.tags||[]).forEach(t=>s.add(t))); return Array.from(s).sort(); });
                 const filteredList = computed(() => {
                     let r = list.value;
@@ -3306,6 +3445,7 @@ const HTML = `<!DOCTYPE html>
 
                     if (filterState.value.daysLeft && filterState.value.daysLeft.length > 0) {
                         const fv = filterState.value.daysLeft;
+                        const w7Days = settings.value.upcomingBillsDays || 7;
                             r = r.filter(row => {
                                 const d = row.daysLeft;
                                 const nd = row.nextDueDate || '';
@@ -3487,7 +3627,8 @@ const HTML = `<!DOCTYPE html>
                         }
 
                         list.value = d.data.items;
-                        settings.value = d.data.settings;
+                        settings.value = d.data.settings || {};
+                        if (!settings.value.upcomingBillsDays) settings.value.upcomingBillsDays = 7;
                         dataVersion.value = d.data.version || 0;
 
                         if (settings.value.language) setLang(settings.value.language);
@@ -3577,9 +3718,8 @@ const HTML = `<!DOCTYPE html>
                             endDate = y + '-' + m + '-' + d;
                         }
                         
-                        // 使用当前时间作为操作时间，或者直接用 startDate 补全时间
-                        const now = new Date();
-                        const renewDate = now.getFullYear() + '-' + (now.getMonth() + 1).toString().padStart(2, '0') + '-' + now.getDate().toString().padStart(2, '0') + ' ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
+                        // 使用 startDate(即 lastRenewDate) 的 0点作为操作时间
+                        const renewDate = startDate + ' 00:00:00';
                         
                         form.value.renewHistory = [{
                             renewDate: renewDate,
@@ -3671,6 +3811,7 @@ const HTML = `<!DOCTYPE html>
                 const editItem = (row) => { isEdit.value=true; form.value={...row,cycleUnit:row.cycleUnit||'day',tags:[...(row.tags||[])],useLunar:!!row.useLunar, notifyDays:(row.notifyDays!==undefined?row.notifyDays:3), notifyTime: (row.notifyTime || '08:00'), autoRenew:row.autoRenew!==false, autoRenewDays:(row.autoRenewDays!==undefined?row.autoRenewDays:3)}; dialogVisible.value=true; };
                 const openSettings = () => { 
                     settingsForm.value = JSON.parse(JSON.stringify(settings.value)); 
+                    if (!settingsForm.value.upcomingBillsDays) settingsForm.value.upcomingBillsDays = 7;
                     const chans = settingsForm.value.enabledChannels || [];
                     Object.keys(channelMap).forEach(k => channelMap[k] = chans.includes(k));
                     settingsVisible.value=true; 
@@ -3775,7 +3916,7 @@ const HTML = `<!DOCTYPE html>
                                 }
                                 
                                 item.renewHistory = [{
-                                    renewDate: renewDate,
+                                    renewDate: startDate + ' 00:00:00',
                                     startDate: startDate,
                                     endDate: endDate,
                                     price: item.fixedPrice || 0,
@@ -4461,9 +4602,9 @@ const HTML = `<!DOCTYPE html>
                 return {
                     tableKey, termRef, isLoggedIn, password, login, logout, loading, list, settings, lang, toggleLang, setLang, t, locale, disabledCount, currentView, hoverIndex, spendingStats, spendingMode, selectedYear, selectedMonth, monthDetails, Close: ElementPlusIconsVue.Close,
                     dialogVisible, settingsVisible, historyVisible, historyLoading, historyLogs, checking, logs, displayLogs, form, settingsForm, isEdit,
-                    expiringCount, expiredCount, currentTag, allTags, filteredList, searchKeyword, logVisible,formatLogTime,Upload, Download,
+                    expiringCount, expiredCount, currentTag, allTags, filteredList, upcoming7DaysBills, upcoming7DaysTotal, searchKeyword, logVisible,formatLogTime,Upload, Download,
                     openAdd, editItem, deleteItem, saveItem, openSettings, saveSettings, runCheck, openHistoryLogs, clearLogs, toggleEnable,importRef, exportData, triggerImport, handleImportFile,
-                    Edit, Delete, Plus, VideoPlay, Setting, Bell, Document, Lock, Monitor, SwitchButton, Calendar, Timer, Files, AlarmClock, Warning, Search, Cpu, Link, Message, Promotion, Iphone, Moon, Sunny, ArrowDown,
+                    Edit, Delete, Plus, VideoPlay, Setting, Bell, Document, Lock, Monitor, SwitchButton, Calendar, Timer, Files, AlarmClock, Warning, Search, Cpu, Link, Connection, Message, Promotion, Iphone, Moon, Sunny, ArrowDown, Tickets,
                     getDaysClass, formatDaysLeft, getTagClass, getLogColor, getLunarStr, getYearGanZhi, getSmartLunarText, getLunarTooltip, getMonthStr, getTagCount, tableRowClassName, channelMap, toggleChannel, testChannel, testing,
                     expandedChannels,
                     calendarUrl, copyIcsUrl, resetCalendarToken, migrateOldData, manualRenew,RefreshRight,timezoneList,currentPage, pageSize, pagedList, previewData,
@@ -4479,7 +4620,13 @@ const HTML = `<!DOCTYPE html>
                     getSummaries, expiringTotal, expiredTotal, totalAmount
                 };
             }
-        }).use(ElementPlus).mount('#app');
+        });
+        
+        app.use(ElementPlus);
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        app.mount('#app');
     </script>
 </body>
 </html>`;
