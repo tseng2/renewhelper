@@ -26,3 +26,4 @@ crons = ["0,30 * * * *"]
 # 部署时通常会提示用户输入，这里作为默认值
 [vars]
 AUTH_PASSWORD = "admin"
+
