@@ -157,7 +157,8 @@ const calculateCycleEndDate = (startDateStr, item) => {
         timezone:'UTC',
         defaultCurrency:'CNY',
         channels: [], // New structure
-        calendarToken: ''
+        calendarToken: '',
+        backupKey: ''
     });
     // const channelMap = reactive({ ... }); // Removed
     // const testing = reactive({ ... }); // Removed
@@ -1119,6 +1120,16 @@ const calculateCycleEndDate = (startDateStr, item) => {
         settingsVisible.value=true; 
     };
     const saveSettings = async (close = true) => { 
+        // Validate Backup Key
+        const bk = settingsForm.value.backupKey;
+        if (bk && bk.trim()) {
+            if (bk.length < 8) {
+                return ElMessage.error(lang.value === 'zh' ? '备份密钥长度至少8位' : 'Backup Key must be at least 8 chars');
+            }
+            if (!/^(?=.*[a-zA-Z])(?=.*\d).+$/.test(bk)) {
+                 return ElMessage.error(lang.value === 'zh' ? '备份密钥需包含字母和数字' : 'Backup Key must contain letters and numbers');
+            }
+        } 
         const oldCurrency = settings.value.defaultCurrency;
         settings.value={...settingsForm.value}; 
         await saveData(null,settings.value); 
@@ -2801,6 +2812,7 @@ const calculateCycleEndDate = (startDateStr, item) => {
                                               </el-form-item>
                                               <el-form-item :label="t('autoDisableThreshold')"><el-input-number v-model="settingsForm.autoDisableDays" :min="1" :max="365" class="!w-full"></el-input-number></el-form-item>
                                               <el-form-item :label="t('upcomingBillsDays')"><el-input-number v-model="settingsForm.upcomingBillsDays" :min="1" :max="365" class="!w-full"></el-input-number></el-form-item>
+
                                           </div>
                                       </el-form>
                                  </div>
@@ -2937,6 +2949,14 @@ const calculateCycleEndDate = (startDateStr, item) => {
                                   <h3 class="text-base font-bold text-slate-800 dark:text-gray-100 mb-3 pb-2 border-b border-gray-100 dark:border-slate-800">{{ lang==='zh'?'数据管理':'Data Management' }}</h3>
                                   
                                   <div class="space-y-3">
+                                      <div class="p-3 border border-gray-100 dark:border-slate-700 rounded-lg">
+                                          <div class="font-bold text-slate-700 dark:text-gray-200">{{ lang==='zh'?'备份密钥':'Backup Key' }}</div>
+                                          <el-input v-model="settingsForm.backupKey" :placeholder="lang==='zh'?'至少8位，包含字母和数字 (留空不启用)' : 'Min 8 chars, Alphanumeric (Optional)'" show-password type="password">
+                                              <template #prefix><el-icon><Lock /></el-icon></template>
+                                          </el-input>
+                                          <div class="text-[10px] text-gray-400 mt-1">{{ lang==='zh'?'用于 /api/backup 接口的专用访问密钥，配置后可替代 JWT Token 使用。' : 'Dedicated key for /api/backup, can be used instead of JWT Token.' }}</div>
+                                      </div>
+
                                       <div class="p-3 border border-gray-100 dark:border-slate-700 rounded-lg flex items-center justify-between">
                                           <div>
                                               <div class="font-bold text-slate-700 dark:text-gray-200">{{ t('btnExport') }}</div>

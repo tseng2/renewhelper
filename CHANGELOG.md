@@ -38,3 +38,4 @@
 - 2026-02-04: fixed: force icon colors for exchange rate status v3.0.26
 - 2026-02-05: improved: dual-mode build (inline/cdn) with local fonts; fixed: ghcr deploy actions; fixed: bill projection logic for short cycles v3.0.37
 - 2026-02-06: fixed: ntfy migration check topic value not token v3.0.28
+- 2026-02-10: security: backup api key & anti-brute-force; ui: move backup key input to data tab (card style) v3.1.6
