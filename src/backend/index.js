@@ -679,8 +679,8 @@ const Calc = {
                 return candidates[0];
             }
         }
-        // 反馈兜底：向后递推1天
-        return new Date(Date.UTC(baseObj.getUTCFullYear(), baseObj.getUTCMonth(), baseObj.getUTCDate() + 1));
+        // 无法找到匹配日期
+        return null;
     }
 };
 
@@ -1284,13 +1284,16 @@ async function checkAndRenew(env, isSched, lang = "zh") {
 
             let shouldPush = true;
             if (isSched) {
-                // 定时任务运行时，检查是否到达指定的推送时间 (notifyTime)
-                const nTime = it.notifyTime || "08:00";
-                const [tgtH, tgtM] = nTime.split(":").map(Number);
-                const diffMinutes = Math.abs(nowH * 60 + nowM - (tgtH * 60 + tgtM));
+                // 定时任务运行时，检查是否到达指定的推送时间 (notifyTimes 数组优先，兼容旧版 notifyTime 字符串)
+                const ntArr = Array.isArray(it.notifyTimes) && it.notifyTimes.length > 0
+                    ? it.notifyTimes : [it.notifyTime || "08:00"];
+                const matched = ntArr.some(nt => {
+                    const [tgtH, tgtM] = String(nt).split(":").map(Number);
+                    return Math.abs(nowH * 60 + nowM - (tgtH * 60 + tgtM)) <= 5;
+                });
 
                 // 只有在设定时间前后 5分钟内才推送
-                if (diffMinutes > 5) {
+                if (!matched) {
                     shouldPush = false;
                 }
             }
@@ -1563,7 +1566,8 @@ app.post(
                 tags: Array.isArray(i.tags) ? i.tags : [],
                 useLunar: !!i.useLunar,
                 notifyDays: i.notifyDays !== null ? Number(i.notifyDays) : null,
-                notifyTime: i.notifyTime || "08:00",
+                notifyTime: typeof i.notifyTime === 'string' ? i.notifyTime : (Array.isArray(i.notifyTime) ? (i.notifyTime[0] || "08:00") : "08:00"),
+                notifyTimes: Array.isArray(i.notifyTimes) && i.notifyTimes.length > 0 ? i.notifyTimes : (typeof i.notifyTime === 'string' ? [i.notifyTime || "08:00"] : ["08:00"]),
                 autoRenew: i.autoRenew !== false,
                 autoRenewDays: i.autoRenewDays !== null ? Number(i.autoRenewDays) : null,
                 fixedPrice: Number(i.fixedPrice) || 0,
@@ -1805,11 +1809,39 @@ app.get("/api/calendar.ics", async (req, env, url) => {
         parts.push("STATUS:CONFIRMED");
         parts.push("TRANSP:TRANSPARENT");
 
-        const unitLabel = T.unit[item.cycleUnit] || item.cycleUnit;
-
         // 构建描述时，对动态内容应用转义
         let descParts = [];
-        descParts.push(`${T.lblCycle}: ${item.intervalDays}${unitLabel}`);
+        if (item.type === 'repeat' && item.repeat) {
+            // repeat 模式：生成规则文字描述
+            const r = item.repeat;
+            const isZh = lang === 'zh';
+            const freqMap = isZh
+                ? { daily: '天', weekly: '周', monthly: '个月', yearly: '年' }
+                : { daily: 'day(s)', weekly: 'week(s)', monthly: 'month(s)', yearly: 'year(s)' };
+            const wdMap = isZh
+                ? ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+                : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            let desc = isZh
+                ? `每 ${r.interval} ${freqMap[r.freq] || r.freq}`
+                : `Every ${r.interval} ${freqMap[r.freq] || r.freq}`;
+            if (r.bymonth && r.bymonth.length > 0) {
+                const ms = r.bymonth.map(m => isZh ? m + '月' : monthAbbr[m - 1]).join(', ');
+                desc += isZh ? ` ${ms}` : ` in ${ms}`;
+            }
+            if (r.bymonthday && r.bymonthday.length > 0) {
+                const ds = r.bymonthday.join(', ');
+                desc += isZh ? ` ${ds}日` : ` on day ${ds}`;
+            }
+            if (r.byweekday && r.byweekday.length > 0) {
+                const ws = r.byweekday.map(w => wdMap[w]).join(', ');
+                desc += isZh ? ` ${ws}` : ` on ${ws}`;
+            }
+            descParts.push(`${isZh ? '重复规则' : 'Rule'}: ${desc}`);
+        } else {
+            const unitLabel = T.unit[item.cycleUnit] || item.cycleUnit;
+            descParts.push(`${T.lblCycle}: ${item.intervalDays}${unitLabel}`);
+        }
         descParts.push(`${T.lblLast}: ${item.lastRenewDate}`);
         if (item.message) {
             descParts.push(`${T.note}: ${formatIcsText(item.message)}`);
@@ -1818,9 +1850,10 @@ app.get("/api/calendar.ics", async (req, env, url) => {
         // 使用 \n 连接各行，并作为 DESCRIPTION 的值
         parts.push(`DESCRIPTION:${descParts.join("\\n")}`);
 
-        // 使用 notifyTime 在当天提醒
-        const nTime = item.notifyTime || "08:00";
-        const [nH, nM] = nTime.split(":").map(Number);
+        // 使用 notifyTime 在当天提醒（取第一个时间）
+        const firstNT = Array.isArray(item.notifyTimes) && item.notifyTimes.length > 0
+            ? item.notifyTimes[0] : (item.notifyTime || "08:00");
+        const [nH, nM] = String(firstNT).split(":").map(Number);
 
         // 构造 ISO8601 持续时间字符串 (PTnHnM)
         // 全天事件从 00:00 开始，PT8H 即代表当天 08:00
