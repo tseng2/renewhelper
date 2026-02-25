@@ -153,7 +153,7 @@ const frontendCalc = {
 };
 const messages = {
     zh: {
-        upcomingBillsDays: '待付款提醒天数', upcomingBills: '%s日内待付款项', filter: { expired: '已过期 / 今天', w7: '%s天内', w30: '30天内', thisMonth: '本月内', nextMonth: '下月内', halfYear: '半年内', oneYear: '1年内', new: '新服务 (<30天)', stable: '稳定 (1个月-1年)', long: '长期 (>1年)', m1: '最近1个月', m6: '半年内', year: '今年内', earlier: '更早以前' }, viewSwitch: '视图切换', viewProjects: '项目列表', viewSpending: '支出分析', annualSummary: '年度汇总', monthlyTrend: '月度趋势', noSpendingData: '暂无支出数据', avgMonthly: '月均', billAmount: '账单金额 (按账单周期)', opSpending: '实际支出 (按操作日期)', secPref: '偏好设置', manualRenew: '手动续期', tipToggle: '切换状态', tipRenew: '手动续期', tipEdit: '编辑服务', tipDelete: '删除服务', tipDeleteCh: '删除渠道', secNotify: '通知配置', secData: '数据管理', lblIcsTitle: '日历订阅', lblIcsUrl: '订阅地址 (iOS/Google)', btnCopy: '复制', btnResetToken: '重置令牌', loginTitle: '身份验证', passwordPlaceholder: '请输入访问密钥/Authorization Key', unlockBtn: '解锁终端/UNLOCK', check: '立即检查', add: '新增服务', settings: '系统设置', logs: '运行日志', logout: '安全退出', totalServices: '服务总数', expiringSoon: '即将到期', expiredAlert: '已过期 / 警告', serviceName: '服务名称', type: '类型', nextDue: '下次到期', uptime: '已运行', lastRenew: '上次续期', cyclePeriod: '周期', actions: '操作', cycle: '循环订阅', reset: '到期重置', disabled: '已停用', days: '天', daysUnit: '天', typeReset: '到期重置', typeCycle: '循环订阅', lunarCal: '农历', lbOffline: '离线', unit: { day: '天', week: '周', month: '月', year: '年' }, editService: '编辑服务', editLastRenewHint: '请在「历史记录」中修改', newService: '新增服务', formName: '名称', namePlaceholder: '例如: Netflix', formType: '模式', createDate: '创建时间', interval: '周期时长', note: '备注信息', status: '状态', active: '启用', disabledText: '禁用', cancel: '取消', save: '保存数据', saveSettings: '保存配置', settingsTitle: '系统设置', setNotify: '通知配置', pushSwitch: '推送总开关', pushUrl: 'Webhook 地址', notifyThreshold: '提醒阈值', setAuto: '自动化配置', autoRenewSwitch: '自动续期', autoRenewThreshold: '自动续期阈值', autoDisableThreshold: '自动禁用阈值', daysOverdue: '天后触发', sysLogs: '系统日志', execLogs: '执行记录', clearHistory: '清空历史', noLogs: '无记录', liveLog: '实时终端', btnExport: '导出备份', btnImport: '恢复备份', btnTest: '发送测试', btnRefresh: '刷新日志',
+        upcomingBillsDays: '待付款提醒天数', upcomingBills: '%s日内待付款项', filter: { expired: '已过期 / 今天', w7: '%s天内', w30: '30天内', thisMonth: '本月内', nextMonth: '下月内', halfYear: '半年内', oneYear: '1年内', new: '新服务 (<30天)', stable: '稳定 (1个月-1年)', long: '长期 (>1年)', m1: '最近1个月', m6: '半年内', year: '今年内', earlier: '更早以前' }, viewSwitch: '视图切换', viewProjects: '项目列表', viewSpending: '支出分析', viewCalendar: '日历视图', calToday: '今天', calNoEvents: '当日无到期项目', calWeekdays: ['一','二','三','四','五','六','日'], annualSummary: '年度汇总', monthlyTrend: '月度趋势', noSpendingData: '暂无支出数据', avgMonthly: '月均', billAmount: '账单金额 (按账单周期)', opSpending: '实际支出 (按操作日期)', secPref: '偏好设置', manualRenew: '手动续期', tipToggle: '切换状态', tipRenew: '手动续期', tipEdit: '编辑服务', tipDelete: '删除服务', tipDeleteCh: '删除渠道', secNotify: '通知配置', secData: '数据管理', lblIcsTitle: '日历订阅', lblIcsUrl: '订阅地址 (iOS/Google)', btnCopy: '复制', btnResetToken: '重置令牌', loginTitle: '身份验证', passwordPlaceholder: '请输入访问密钥/Authorization Key', unlockBtn: '解锁终端/UNLOCK', check: '立即检查', add: '新增服务', settings: '系统设置', logs: '运行日志', logout: '安全退出', totalServices: '服务总数', expiringSoon: '即将到期', expiredAlert: '已过期 / 警告', serviceName: '服务名称', type: '类型', nextDue: '下次到期', uptime: '已运行', lastRenew: '上次续期', cyclePeriod: '周期', actions: '操作', cycle: '循环订阅', reset: '到期重置', disabled: '已停用', days: '天', daysUnit: '天', typeReset: '到期重置', typeCycle: '循环订阅', lunarCal: '农历', lbOffline: '离线', unit: { day: '天', week: '周', month: '月', year: '年' }, editService: '编辑服务', editLastRenewHint: '请在「历史记录」中修改', newService: '新增服务', formName: '名称', namePlaceholder: '例如: Netflix', formType: '模式', createDate: '创建时间', interval: '周期时长', note: '备注信息', status: '状态', active: '启用', disabledText: '禁用', cancel: '取消', save: '保存数据', saveSettings: '保存配置', settingsTitle: '系统设置', setNotify: '通知配置', pushSwitch: '推送总开关', pushUrl: 'Webhook 地址', notifyThreshold: '提醒阈值', setAuto: '自动化配置', autoRenewSwitch: '自动续期', autoRenewThreshold: '自动续期阈值', autoDisableThreshold: '自动禁用阈值', daysOverdue: '天后触发', sysLogs: '系统日志', execLogs: '执行记录', clearHistory: '清空历史', noLogs: '无记录', liveLog: '实时终端', btnExport: '导出备份', btnImport: '恢复备份', btnTest: '发送测试', btnRefresh: '刷新日志',
         lblEnable: '启用', lblToken: '令牌 (Token)', lblApiKey: 'API Key', lblChatId: '会话ID',
         lblServer: '服务器URL', lblDevKey: '设备Key', lblFrom: '发件人', lblTo: '收件人', lblUid: '用户ID (UID)', lblSendKey: '发送密钥 (SendKey)', lblSecret: '加签密钥 (Secret)',
         lblTopic: '主题 (Topic)', readOnly: '只读',
@@ -164,7 +164,7 @@ const messages = {
         addChannel: '添加渠道', noChannels: '暂无推送渠道，请点击右上角添加。', modifyChannel: '配置渠道', channelType: '渠道类型', channelName: '渠道名称 (备注)', selectChannels: '选择推送渠道 (留空则默认推送所有)', delete: '删除'
     },
     en: {
-        upcomingBillsDays: 'Pending Reminder', upcomingBills: '%s Days Pending', viewSwitch: 'VIEW SWITCH', viewProjects: 'PROJECTS', viewSpending: 'DASHBOARD', annualSummary: 'Annual Summary', monthlyTrend: 'Monthly Trend', noSpendingData: 'No Spending Data', billAmount: 'BILL AMOUNT', opSpending: 'ACTUAL COST', avgMonthly: 'AVG', avgMonthlyLabel: 'AVG MONTHLY', filter: { expired: 'Overdue/Today', w7: 'Within %s Days', w30: 'Within 30 Days', future: 'Future(>30d)', new: 'New (<30d)', stable: 'Stable (1m-1y)', long: 'Long Term (>1y)', m1: 'Last Month', m6: 'Last 6 Months', year: 'This Year', earlier: 'Earlier' }, secPref: 'PREFERENCES', manualRenew: 'Quick Renew', tipToggle: 'Toggle Status', tipRenew: 'Quick Renew', tipEdit: 'Edit Service', tipDelete: 'Delete Service', tipDeleteCh: 'Delete Channel', secNotify: 'NOTIFICATIONS', secData: 'DATA MANAGEMENT', lblIcsTitle: 'CALENDAR SUBSCRIPTION', lblIcsUrl: 'ICS URL (iOS/Google Calendar)', btnCopy: 'COPY', btnResetToken: 'RESET TOKEN', loginTitle: 'SYSTEM ACCESS', passwordPlaceholder: 'Authorization Key', unlockBtn: 'UNLOCK TERMINAL', check: 'CHECK', add: 'ADD NEW', settings: 'CONFIG', logs: 'LOGS', logout: 'LOGOUT', totalServices: 'TOTAL SERVICES', expiringSoon: 'EXPIRING SOON', expiredAlert: 'EXPIRED / ALERT', serviceName: 'SERVICE NAME', type: 'TYPE', nextDue: 'NEXT DUE', uptime: 'UPTIME', lastRenew: 'LAST RENEW', cyclePeriod: 'CYCLE', actions: 'ACTIONS', cycle: 'CYCLE', reset: 'RESET', disabled: 'DISABLED', days: 'DAYS', daysUnit: 'DAYS', typeReset: 'RESET', typeCycle: 'CYCLE', lunarCal: 'Lunar', lbOffline: 'OFFLINE', unit: { day: 'DAY', week: 'WK', month: 'MTH', year: 'YR' }, editService: 'EDIT SERVICE', editLastRenewHint: 'Please modify in History', newService: 'NEW SERVICE', formName: 'NAME', namePlaceholder: 'e.g. Netflix', formType: 'MODE', createDate: 'CREATE DATE', interval: 'INTERVAL', note: 'NOTE', status: 'STATUS', active: 'ACTIVE', disabledText: 'DISABLED', cancel: 'CANCEL', save: 'SAVE DATA', saveSettings: 'SAVE CONFIG', settingsTitle: 'SYSTEM CONFIG', setNotify: 'NOTIFICATION', pushSwitch: 'MASTER PUSH', pushUrl: 'WEBHOOK URL', notifyThreshold: 'ALERT THRESHOLD', setAuto: 'AUTOMATION', autoRenewSwitch: 'AUTO RENEW', autoRenewThreshold: 'RENEW AFTER', autoDisableThreshold: 'DISABLE AFTER', daysOverdue: 'DAYS OVERDUE', sysLogs: 'SYSTEM LOGS', execLogs: 'EXECUTION LOGS', clearHistory: 'CLEAR HISTORY', noLogs: 'NO DATA', liveLog: 'LIVE TERMINAL', btnExport: 'Export Data', btnImport: 'Import Data', btnTest: 'Send Test', btnRefresh: 'REFRESH', last12M: 'LAST 12M',
+        upcomingBillsDays: 'Pending Reminder', upcomingBills: '%s Days Pending', viewSwitch: 'VIEW SWITCH', viewProjects: 'PROJECTS', viewSpending: 'DASHBOARD', viewCalendar: 'CALENDAR', calToday: 'TODAY', calNoEvents: 'No events', calWeekdays: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], annualSummary: 'Annual Summary', monthlyTrend: 'Monthly Trend', noSpendingData: 'No Spending Data', billAmount: 'BILL AMOUNT', opSpending: 'ACTUAL COST', avgMonthly: 'AVG', avgMonthlyLabel: 'AVG MONTHLY', filter: { expired: 'Overdue/Today', w7: 'Within %s Days', w30: 'Within 30 Days', future: 'Future(>30d)', new: 'New (<30d)', stable: 'Stable (1m-1y)', long: 'Long Term (>1y)', m1: 'Last Month', m6: 'Last 6 Months', year: 'This Year', earlier: 'Earlier' }, secPref: 'PREFERENCES', manualRenew: 'Quick Renew', tipToggle: 'Toggle Status', tipRenew: 'Quick Renew', tipEdit: 'Edit Service', tipDelete: 'Delete Service', tipDeleteCh: 'Delete Channel', secNotify: 'NOTIFICATIONS', secData: 'DATA MANAGEMENT', lblIcsTitle: 'CALENDAR SUBSCRIPTION', lblIcsUrl: 'ICS URL (iOS/Google Calendar)', btnCopy: 'COPY', btnResetToken: 'RESET TOKEN', loginTitle: 'SYSTEM ACCESS', passwordPlaceholder: 'Authorization Key', unlockBtn: 'UNLOCK TERMINAL', check: 'CHECK', add: 'ADD NEW', settings: 'CONFIG', logs: 'LOGS', logout: 'LOGOUT', totalServices: 'TOTAL SERVICES', expiringSoon: 'EXPIRING SOON', expiredAlert: 'EXPIRED / ALERT', serviceName: 'SERVICE NAME', type: 'TYPE', nextDue: 'NEXT DUE', uptime: 'UPTIME', lastRenew: 'LAST RENEW', cyclePeriod: 'CYCLE', actions: 'ACTIONS', cycle: 'CYCLE', reset: 'RESET', disabled: 'DISABLED', days: 'DAYS', daysUnit: 'DAYS', typeReset: 'RESET', typeCycle: 'CYCLE', lunarCal: 'Lunar', lbOffline: 'OFFLINE', unit: { day: 'DAY', week: 'WK', month: 'MTH', year: 'YR' }, editService: 'EDIT SERVICE', editLastRenewHint: 'Please modify in History', newService: 'NEW SERVICE', formName: 'NAME', namePlaceholder: 'e.g. Netflix', formType: 'MODE', createDate: 'CREATE DATE', interval: 'INTERVAL', note: 'NOTE', status: 'STATUS', active: 'ACTIVE', disabledText: 'DISABLED', cancel: 'CANCEL', save: 'SAVE DATA', saveSettings: 'SAVE CONFIG', settingsTitle: 'SYSTEM CONFIG', setNotify: 'NOTIFICATION', pushSwitch: 'MASTER PUSH', pushUrl: 'WEBHOOK URL', notifyThreshold: 'ALERT THRESHOLD', setAuto: 'AUTOMATION', autoRenewSwitch: 'AUTO RENEW', autoRenewThreshold: 'RENEW AFTER', autoDisableThreshold: 'DISABLE AFTER', daysOverdue: 'DAYS OVERDUE', sysLogs: 'SYSTEM LOGS', execLogs: 'EXECUTION LOGS', clearHistory: 'CLEAR HISTORY', noLogs: 'NO DATA', liveLog: 'LIVE TERMINAL', btnExport: 'Export Data', btnImport: 'Import Data', btnTest: 'Send Test', btnRefresh: 'REFRESH', last12M: 'LAST 12M',
         lblEnable: 'Enable', lblToken: 'Token', lblApiKey: 'API Key', lblChatId: 'Chat ID',
         lblServer: 'Server URL', lblDevKey: 'Device Key', lblFrom: 'From Email', lblTo: 'To Email', lblUid: 'UID', lblSendKey: 'SendKey', lblSecret: 'Secret (Optional)',
 
@@ -234,6 +234,93 @@ const newVersionCode = ref('');
 const dialogVisible = ref(false), settingsVisible = ref(false), historyVisible = ref(false), historyLoading = ref(false), historyLogs = ref([]);
 const checking = ref(false), logs = ref([]), displayLogs = ref([]), isEdit = ref(false), lang = ref('zh'), currentTag = ref(''), searchKeyword = ref('');
 const currentView = ref('project');
+const calendarMonth = ref((() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })());
+// el-calendar 日历视图状态
+const calendarDate = ref(new Date());
+const calendarRef = ref(null);
+const calendarYearRange = computed(() => {
+    const cur = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => cur - 2 + i);
+});
+const calendarSelectedYear = computed({
+    get: () => calendarDate.value.getFullYear(),
+    set: (y) => { const d = new Date(calendarDate.value); d.setFullYear(y); calendarDate.value = d; }
+});
+const calendarSelectedMonth = computed({
+    get: () => calendarDate.value.getMonth() + 1,
+    set: (m) => { const d = new Date(calendarDate.value); d.setMonth(m - 1); calendarDate.value = d; }
+});
+const goCalendarToday = () => { calendarDate.value = new Date(); };
+// 按日期索引的事件映射 { 'YYYY-MM-DD': [item, ...] }
+const calendarEvents = computed(() => {
+    const map = {};
+    const addEvent = (dateStr, item, isProjected = false) => {
+        if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+        if (!map[dateStr]) map[dateStr] = [];
+        map[dateStr].push({
+            name: item.name,
+            type: item.type || 'cycle',
+            fixedPrice: item.fixedPrice,
+            currency: item.currency || settings.value.defaultCurrency || 'CNY',
+            isProjected
+        });
+    };
+    // 推算截止日期：明年同月底
+    const now = new Date();
+    const endLimit = new Date(now.getFullYear() + 1, now.getMonth() + 1, 0);
+    const parseYMD = (s) => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+    const fmtDate = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+
+    list.value.forEach(item => {
+        if (item.enabled === false) return;
+        // 1. 历史记录回溯
+        const history = item.renewHistory || [];
+        history.forEach(r => {
+            if (r.startDate) addEvent(r.startDate, item, false);
+        });
+        // 2. 当前 nextDueDate
+        if (item.nextDueDate) {
+            addEvent(item.nextDueDate, item, false);
+        }
+        // 3. 未来推算（从 nextDueDate 向后推到明年同月）
+        if (item.autoRenew && item.nextDueDate) {
+            const isRepeat = item.type === 'repeat' && item.repeat;
+            const unit = item.cycleUnit || 'day';
+            const val = parseInt(item.intervalDays) || 1;
+            let cursor;
+            try { cursor = parseYMD(item.nextDueDate); } catch (e) { return; }
+            for (let i = 0; i < 366; i++) {
+                let nextObj;
+                if (isRepeat) {
+                    try {
+                        const advObj = new Date(cursor.getTime() + 86400000);
+                        const advStr = fmtDate(advObj);
+                        nextObj = frontendCalc.calcNextRepeatDate(item.repeat, advStr, item.createDate || item.lastRenewDate);
+                        if (!nextObj) break;
+                    } catch (e) { break; }
+                } else {
+                    nextObj = new Date(cursor);
+                    if (unit === 'year') nextObj.setFullYear(nextObj.getFullYear() + val);
+                    else if (unit === 'month') nextObj.setMonth(nextObj.getMonth() + val);
+                    else nextObj.setDate(nextObj.getDate() + val);
+                }
+                if (nextObj > endLimit) break;
+                addEvent(fmtDate(nextObj), item, true);
+                cursor = nextObj;
+            }
+        }
+    });
+    return map;
+});
+// 格式化日期为 YYYY-MM-DD 字符串
+const formatDateKey = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+const getCalendarDayEvents = (date) => calendarEvents.value[formatDateKey(date)] || [];
+const isCalendarToday = (date) => formatDateKey(date) === formatDateKey(new Date());
 const hoverIndex = ref(-1);
 const spendingMode = ref('op');
 const selectedYear = ref('recent'); // 'recent' = last 12 months, or year number like 2024
@@ -2607,18 +2694,22 @@ const openLink = (url) => { if (url) window.open(url, '_blank'); };
                                     settings.defaultCurrency || 'CNY' }}</div>
                         </div>
                     </div>
-                    <div class="mecha-panel p-6 pl-8 border-l-4 !border-l-purple-500">
+                    <div class="mecha-panel p-4 pl-6 border-l-4 !border-l-purple-500">
                         <div class="text-purple-600 text-xs font-bold font-mono mb-2 tracking-widest">{{ t('viewSwitch')
                         }}</div>
                         <div
-                            class="mt-3 flex w-full bg-gray-200 dark:bg-slate-800 rounded-lg p-1 border border-gray-300 dark:border-slate-700">
+                            class="mt-2 flex w-full bg-gray-200 dark:bg-slate-800 rounded-lg p-1 border border-gray-300 dark:border-slate-700">
                             <button @click="currentView = 'project'"
-                                :class="['flex-1 px-4 py-2 rounded text-xs font-mono font-bold transition-all text-center justify-center cursor-pointer', currentView === 'project' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white']">
+                                :class="['flex-1 px-2 py-1.5 rounded text-[11px] font-mono font-bold transition-all text-center cursor-pointer leading-tight', currentView === 'project' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white']">
                                 {{ t('viewProjects') }}
                             </button>
                             <button @click="currentView = 'spending'"
-                                :class="['flex-1 px-4 py-2 rounded text-xs font-mono font-bold transition-all text-center justify-center cursor-pointer', currentView === 'spending' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white']">
+                                :class="['flex-1 px-2 py-1.5 rounded text-[11px] font-mono font-bold transition-all text-center cursor-pointer leading-tight', currentView === 'spending' ? 'bg-cyan-600 text-white shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white']">
                                 {{ t('viewSpending') }}
+                            </button>
+                            <button @click="currentView = 'calendar'"
+                                :class="['flex-1 px-2 py-1.5 rounded text-[11px] font-mono font-bold transition-all text-center cursor-pointer leading-tight', currentView === 'calendar' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white']">
+                                {{ t('viewCalendar') }}
                             </button>
                         </div>
                     </div>
@@ -2888,7 +2979,7 @@ const openLink = (url) => { if (url) window.open(url, '_blank'); };
                 <!-- End Project View -->
 
                 <!-- Spending View -->
-                <template v-else>
+                <template v-else-if="currentView === 'spending'">
                     <div class="spending-dashboard animate-fade-in" v-if="spendingStats.hasData">
                         <!-- Header & Toggle -->
                         <div class="flex justify-between items-center mb-6">
@@ -3311,6 +3402,108 @@ const openLink = (url) => { if (url) window.open(url, '_blank'); };
 
                 </template>
                 <!-- End Spending View -->
+
+                <!-- Calendar View -->
+                <template v-else>
+                    <div class="animate-fade-in calendar-view-container">
+                        <el-calendar ref="calendarRef" v-model="calendarDate">
+                            <!-- 自定义头部：年/月下拉 + 前后翻页 + 今天按钮 -->
+                            <template #header="{ date }">
+                                <div class="flex items-center justify-between w-full flex-wrap gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <el-select v-model="calendarSelectedYear" size="small" class="!w-24"
+                                            :teleported="false">
+                                            <el-option v-for="y in calendarYearRange" :key="y" :label="y + (lang === 'zh' ? '年' : '')" :value="y" />
+                                        </el-select>
+                                        <el-select v-model="calendarSelectedMonth" size="small" class="!w-28"
+                                            :teleported="false">
+                                            <el-option v-for="m in 12" :key="m"
+                                                :label="lang === 'zh' ? m + '月' : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]"
+                                                :value="m" />
+                                        </el-select>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <el-button-group>
+                                            <el-button size="small" @click="calendarRef?.selectDate('prev-year')" class="!font-mono !text-xs">{{ lang === 'zh' ? '上一年' : 'Prev Year' }}</el-button>
+                                            <el-button size="small" @click="calendarRef?.selectDate('prev-month')" class="!font-mono !text-xs">{{ lang === 'zh' ? '上个月' : 'Prev Month' }}</el-button>
+                                            <el-button size="small" @click="goCalendarToday" class="!font-mono !font-bold">{{ t('calToday') }}</el-button>
+                                            <el-button size="small" @click="calendarRef?.selectDate('next-month')" class="!font-mono !text-xs">{{ lang === 'zh' ? '下个月' : 'Next Month' }}</el-button>
+                                            <el-button size="small" @click="calendarRef?.selectDate('next-year')" class="!font-mono !text-xs">{{ lang === 'zh' ? '下一年' : 'Next Year' }}</el-button>
+                                        </el-button-group>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- 自定义日期单元格：事件标签 + Popover -->
+                            <template #date-cell="{ data }">
+                                <el-popover :width="280" trigger="hover" placement="top" :show-after="200" :hide-after="0"
+                                    :disabled="getCalendarDayEvents(data.date).length === 0">
+                                    <template #reference>
+                                        <div :class="['cal-day-cell',
+                                            isCalendarToday(data.date) ? 'is-today-cell' : '',
+                                            data.type !== 'current-month' ? 'is-other-month' : ''
+                                        ]">
+                                            <span class="cal-day-num">{{ data.date.getDate() }}</span>
+                                            <!-- 农历文字 -->
+                                            <span class="cal-lunar-text">{{ getSmartLunarText({ date: data.date }) }}</span>
+                                            <!-- 事件彩色条形标签 -->
+                                            <div class="cal-event-bars" v-if="getCalendarDayEvents(data.date).length > 0">
+                                                <template v-for="(ev, ei) in getCalendarDayEvents(data.date).slice(0, 2)" :key="ei">
+                                                    <div :class="['cal-event-bar',
+                                                        ev.type === 'repeat' ? 'bar-repeat' : ev.type === 'reset' ? 'bar-reset' : 'bar-cycle'
+                                                    ]">{{ ev.name }}</div>
+                                                </template>
+                                                <div v-if="getCalendarDayEvents(data.date).length > 2" class="cal-event-bar bar-more">
+                                                    +{{ getCalendarDayEvents(data.date).length - 2 }} {{ lang === 'zh' ? '项' : 'more' }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <!-- 气泡内容 -->
+                                    <div class="text-sm">
+                                        <div class="mb-2 pb-2 border-b border-slate-200 dark:border-slate-600">
+                                            <div class="font-bold text-slate-700 dark:text-slate-200 font-mono text-xs">
+                                                {{ formatDateKey(data.date) }}
+                                                <span class="ml-1 text-slate-400 font-normal">{{ getLunarTooltip({ date: data.date }) }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-3 text-[10px] font-mono mt-1">
+                                                <span class="text-slate-500">{{ getCalendarDayEvents(data.date).length }} {{ lang === 'zh' ? '个项目' : 'items' }}</span>
+                                                <span class="font-bold text-slate-700 dark:text-slate-200">≈ {{ getCalendarDayEvents(data.date).reduce((s, e) => s + (parseFloat(e.fixedPrice) || 0), 0).toFixed(2) }} {{ settings.defaultCurrency || 'CNY' }}</span>
+                                            </div>
+                                        </div>
+                                        <div v-for="(ev, ei) in getCalendarDayEvents(data.date)" :key="'pop-'+ei"
+                                            class="flex items-center gap-2 py-1">
+                                            <span :class="['w-2 h-2 rounded-full shrink-0',
+                                                ev.type === 'repeat' ? 'bg-purple-500' : ev.type === 'reset' ? 'bg-orange-500' : 'bg-blue-500'
+                                            ]"></span>
+                                            <span class="truncate font-medium text-slate-700 dark:text-slate-200">{{ ev.name }}</span>
+                                            <span v-if="ev.fixedPrice" class="text-[10px] font-mono text-slate-400 whitespace-nowrap">{{ ev.fixedPrice }} {{ ev.currency || settings.defaultCurrency || 'CNY' }}</span>
+                                            <span :class="['ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap',
+                                                ev.type === 'repeat' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                                                : ev.type === 'reset' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
+                                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                                            ]">{{ ev.type === 'repeat' ? t('typeRepeat') : ev.type === 'reset' ? t('typeReset') : t('typeCycle') }}</span>
+                                        </div>
+                                    </div>
+                                </el-popover>
+                            </template>
+                        </el-calendar>
+
+                        <!-- 图例 -->
+                        <div class="flex justify-center gap-6 mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center gap-1.5 text-[10px] font-mono text-slate-500">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span> {{ t('typeCycle') }}
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[10px] font-mono text-slate-500">
+                                <span class="w-2 h-2 rounded-full bg-orange-500"></span> {{ t('typeReset') }}
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[10px] font-mono text-slate-500">
+                                <span class="w-2 h-2 rounded-full bg-purple-500"></span> {{ t('typeRepeat') }}
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <!-- End Calendar View -->
 
                 <div class="mt-8 py-6 text-center border-t border-slate-200/60">
                     <p
@@ -4519,5 +4712,168 @@ const openLink = (url) => { if (url) window.open(url, '_blank'); };
 
 .shadow-glow {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* ========== el-calendar Mecha 风格覆盖 ========== */
+.calendar-view-container .el-calendar {
+    --el-calendar-border: 1px solid var(--el-border-color-lighter);
+    background: transparent;
+    border: none;
+}
+.calendar-view-container .el-calendar__header {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.calendar-view-container .el-calendar__body {
+    padding: 8px 0;
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+}
+.calendar-view-container .el-calendar-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+.calendar-view-container .el-calendar-table thead th {
+    font-size: 10px;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    color: var(--el-text-color-placeholder);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 0;
+}
+.calendar-view-container .el-calendar-table td {
+    border: 1px solid #e2e8f0;
+    border-radius: 0;
+    transition: all 0.15s ease;
+    background: #f8fafc;
+    position: relative;
+}
+.dark .calendar-view-container .el-calendar-table td {
+    border-color: #334155;
+    background: #1e293b;
+}
+.calendar-view-container .el-calendar-table td:hover {
+    background: #eff6ff;
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: -2px;
+    z-index: 1;
+}
+.dark .calendar-view-container .el-calendar-table td:hover {
+    background: #1e3a5f;
+    outline-color: #60a5fa;
+}
+.calendar-view-container .el-calendar-table td.is-today {
+    background: #dbeafe;
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: -2px;
+    z-index: 1;
+}
+.dark .calendar-view-container .el-calendar-table td.is-today {
+    background: #1e3a5f;
+    outline-color: #3b82f6;
+}
+.calendar-view-container .el-calendar-table td.is-selected {
+    background: #dbeafe;
+}
+.dark .calendar-view-container .el-calendar-table td.is-selected {
+    background: #1e3a5f;
+}
+.calendar-view-container .el-calendar-table .el-calendar-day {
+    height: auto;
+    min-height: 72px;
+    padding: 4px;
+}
+/* 日期单元格内部样式 */
+.cal-day-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 0;
+    min-height: 56px;
+}
+.cal-day-cell.is-other-month {
+    opacity: 0.35;
+}
+.cal-day-cell.is-today-cell .cal-day-num {
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-8);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cal-day-num {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    line-height: 1;
+    color: var(--el-text-color-primary);
+}
+.cal-lunar-text {
+    font-size: 9px;
+    color: var(--el-text-color-secondary);
+    line-height: 1;
+    white-space: nowrap;
+}
+/* 事件条形标签 */
+.cal-event-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    margin-top: 2px;
+    padding: 0 2px;
+}
+.cal-event-bar {
+    font-size: 9px;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 1px 4px 1px 6px;
+    border-left: 3px solid;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 0 2px 2px 0;
+}
+.cal-event-bar.bar-cycle {
+    border-left-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+.dark .cal-event-bar.bar-cycle {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+.cal-event-bar.bar-reset {
+    border-left-color: #f97316;
+    background: rgba(249, 115, 22, 0.12);
+    color: #ea580c;
+}
+.dark .cal-event-bar.bar-reset {
+    background: rgba(249, 115, 22, 0.2);
+    color: #fdba74;
+}
+.cal-event-bar.bar-repeat {
+    border-left-color: #a855f7;
+    background: rgba(168, 85, 247, 0.12);
+    color: #9333ea;
+}
+.dark .cal-event-bar.bar-repeat {
+    background: rgba(168, 85, 247, 0.2);
+    color: #d8b4fe;
+}
+.cal-event-bar.bar-more {
+    border-left-color: #94a3b8;
+    background: rgba(148, 163, 184, 0.1);
+    color: #64748b;
+    font-weight: 700;
+}
+.dark .cal-event-bar.bar-more {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
 }
 </style>
